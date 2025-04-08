@@ -54,7 +54,7 @@ $env:LIBCLANG_PATH = "C:\Program Files\LLVM\bin"
 - Set the environment variable `ECAL_HOME`, e.g.:
 
 ```powershell
-$env:ECAL_HOME = "D:\eCAL"
+$env:ECAL_HOME = "C:\eCAL"
 ```
 
 Expected structure:
