@@ -5,20 +5,20 @@
 This project consists of three Rust crates:
 
 ```
-📦 rustecal-sys   – raw FFI bindings to the eCAL C API (generated via bindgen)
-📦 rustecal       – safe high-level Rust wrapper over rustecal-sys
-📦 rustecal-demo  – example app using rustecal
+📦 rustecal-sys       – raw FFI bindings to the eCAL C API (generated via bindgen)
+📦 rustecal           – safe high-level Rust wrapper over rustecal-sys
+📦 rustecal-samples   – sample applications using rustecal (pub/sub, services, etc.)
 ```
 
 ---
 
 ## 📦 Project Structure
 
-| Crate             | Description                                      |
-|------------------|--------------------------------------------------|
-| `rustecal-sys`    | Low-level unsafe bindings (via `bindgen`)        |
-| `rustecal`        | Safe Rust abstraction for eCAL users             |
-| `rustecal-demo`   | Example application using `rustecal::Ecal`       |
+| Crate               | Description                                         |
+|--------------------|------------------------------------------------------|
+| `rustecal-sys`      | Low-level unsafe bindings (via `bindgen`)           |
+| `rustecal`          | Safe Rust abstraction for eCAL users                |
+| `rustecal-samples`  | Sample apps                                         |
 
 ---
 
@@ -58,6 +58,7 @@ $env:ECAL_HOME = "C:\eCAL"
 ```
 
 Expected structure:
+
 ```
 %ECAL_HOME%/
 ├── include/ecal_c/      ← all C headers
@@ -66,11 +67,11 @@ Expected structure:
 
 ### 🔷 Linux
 
-- Install system-wide from source or use package if available
-- Headers must be in:
+- Install system-wide from source or package
+- Headers should be in:
   - `/usr/include/ecal_c/` or `/usr/local/include/ecal_c/`
 - Libraries in:
-  - `/usr/lib` or `/usr/local/lib` containing `libecal_core_c.so`
+  - `/usr/lib` or `/usr/local/lib` (must contain `libecal_core_c.so`)
 
 ---
 
@@ -85,7 +86,10 @@ cargo build
 cd ../rustecal
 cargo build
 
-cd ../rustecal-demo
+cd ../rustecal-samples/pubsub/hello_send
+cargo run
+
+cd ../hello_receive
 cargo run
 ```
 
@@ -98,25 +102,11 @@ cargo build
 cd ../rustecal
 cargo build
 
-cd ../rustecal-demo
+cd ../rustecal-samples/pubsub/hello_send
 cargo run
-```
 
----
-
-## 🚀 Example Usage
-
-Inside `rustecal-demo/src/main.rs`:
-
-```rust
-fn main() {
-    rustecal::Ecal::initialize(Some("rustecal_node"))
-        .expect("Failed to init eCAL");
-
-    println!("✅ eCAL is running via Rust");
-
-    rustecal::Ecal::finalize();
-}
+cd ../hello_receive
+cargo run
 ```
 
 ---
@@ -125,12 +115,15 @@ fn main() {
 
 ```
 your_workspace/
-├── rustecal-sys/     # Raw bindings via bindgen
-├── rustecal/         # Safe Rust wrapper API
-└── rustecal-demo/    # Sample usage app
+├── rustecal-sys/                # Raw bindings via bindgen
+├── rustecal/                    # Safe Rust wrapper API
+└── rustecal-samples/            # Sample applications
+    └── pubsub/
+        ├── hello_send/          # Sends string messages
+        └── hello_receive/       # Receives and prints them
 ```
 
-Optional: set up a top-level workspace `Cargo.toml` if desired.
+You can define a top-level workspace in `Cargo.toml` to manage builds across all crates.
 
 ---
 
@@ -138,11 +131,12 @@ Optional: set up a top-level workspace `Cargo.toml` if desired.
 
 - [x] Cross-platform build support (Windows + Linux)
 - [x] Safe initialization/finalization
-- [ ] Publisher / Subscriber API
+- [ ] Publisher / Subscriber APIs
 - [ ] Service client/server support
-- [ ] Configuration handling
+- [ ] Configuration module
 - [ ] Monitoring / logging utilities
 - [ ] Protobuf support via `prost` or `nanopb`
+- [ ] Closure-based safe callback system
 
 ---
 
