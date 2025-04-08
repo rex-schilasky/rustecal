@@ -50,7 +50,7 @@ impl Publisher {
         }
     }
 
-    pub fn send(&self, data: &[u8]) -> Result<(), String> {
+    pub fn send(&self, data: &[u8]) -> i32 {
         let result = unsafe {
             eCAL_Publisher_Send(
                 self.handle,
@@ -60,12 +60,7 @@ impl Publisher {
             )
         };
 
-        // TODO: we need to fix eCAL_Publisher_Send it seems to return 1 if succeeded
-        if result == 1 {
-            Ok(())
-        } else {
-            Err(format!("Send failed with code {}", result))
-        }
+        result
     }
 
     pub fn subscriber_count(&self) -> usize {

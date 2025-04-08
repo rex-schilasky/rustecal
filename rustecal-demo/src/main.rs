@@ -3,20 +3,22 @@ use rustecal::pubsub::types::DataTypeInfo;
 use std::{thread, time::Duration};
 
 fn main() {
-    Ecal::initialize(Some("rustecal_demo")).expect("eCAL initialization failed");
+    Ecal::initialize(Some("minimal string publisher rust")).expect("eCAL initialization failed");
 
     let datatype = DataTypeInfo {
-        encoding: "utf-8".to_string(),
-        type_name: "string".to_string(),
+        encoding:   "utf-8".to_string(),
+        type_name:  "string".to_string(),
         descriptor: b"".to_vec(),
     };
 
-    let publisher = Publisher::new("demo_topic", datatype).expect("Failed to create publisher");
+    let publisher = Publisher::new("Hello", datatype).expect("Failed to create publisher");
 
-    for i in 0..100 {
-        let msg = format!("Hello from rustecal! #{}", i);
-        publisher.send(msg.as_bytes()).unwrap();
-        println!("📤 Sent: {}", msg);
+    let mut i = 0;
+    while Ecal::ok() {
+        i += 1;
+        let msg = format!("HELLO WORLD FROM RUST ({})", i);
+        publisher.send(msg.as_bytes());
+        println!("Sent: {}", msg);
         thread::sleep(Duration::from_millis(500));
     }
 
