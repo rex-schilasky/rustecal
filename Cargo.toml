@@ -1,0 +1,2 @@
+[workspace]
+members = ["rustecal", "rustecal-sys", "rustecal-demo"]
