@@ -1,7 +1,10 @@
-use crate::pubsub::types::DataTypeInfo;
+// src/pubsub/subscriber.rs
+
+use crate::pubsub::types::{DataTypeInfo, FfiDataTypeInfo, FfiReceiveCallbackData, FfiTopicId};
 use rustecal_sys::*;
-use std::ffi::{c_void, CString};
+use std::ffi::CString;
 use std::ptr;
+use std::ffi::c_void;
 
 pub struct Subscriber {
     handle: *mut eCAL_Subscriber,
@@ -15,9 +18,9 @@ impl Subscriber {
         topic_name: &str,
         data_type: DataTypeInfo,
         callback: extern "C" fn(
-            *const eCAL_STopicId,
-            *const eCAL_SDataTypeInformation,
-            *const eCAL_SReceiveCallbackData,
+            *const FfiTopicId,
+            *const FfiDataTypeInfo,
+            *const FfiReceiveCallbackData,
             *mut c_void,
         ),
         user_data: *mut c_void,
@@ -43,7 +46,7 @@ impl Subscriber {
             eCAL_Subscriber_New(
                 c_topic.as_ptr(),
                 &data_type_info,
-                None, // event callback
+                None,
                 ptr::null(),
             )
         };
@@ -53,7 +56,7 @@ impl Subscriber {
         }
 
         let result = unsafe {
-            eCAL_Subscriber_SetReceiveCallback(handle, Some(callback), user_data)
+            eCAL_Subscriber_SetReceiveCallback(handle, Some(std::mem::transmute(callback)), user_data)
         };
 
         if result != 0 {

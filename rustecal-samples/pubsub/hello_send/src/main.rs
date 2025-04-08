@@ -11,7 +11,7 @@ fn main() {
         descriptor: b"".to_vec(),
     };
 
-    let publisher = Publisher::new("Hello", datatype).expect("Failed to create publisher");
+    let publisher = Publisher::new("hello", datatype).expect("Failed to create publisher");
 
     let mut i = 0;
     while Ecal::ok() {

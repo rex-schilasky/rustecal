@@ -1,5 +1,3 @@
-// src/pubsub/types.rs
-
 use std::ffi::c_void;
 use std::os::raw::c_char;
 
@@ -70,6 +68,34 @@ pub struct SubscriberEventCallbackData {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ReceiveCallbackData {
+    pub buffer: *const c_void,
+    pub buffer_size: usize,
+    pub send_timestamp: i64,
+    pub send_clock: i64,
+}
+
+/// FFI-compatible version of eCAL_SDataTypeInformation
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct FfiDataTypeInfo {
+    pub encoding: *const c_char,
+    pub name: *const c_char,
+    pub descriptor: *const c_void,
+    pub descriptor_length: usize,
+}
+
+/// FFI-compatible version of eCAL_STopicId
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct FfiTopicId {
+    pub topic_id: EntityId,
+    pub topic_name: *const c_char,
+}
+
+/// FFI-compatible version of eCAL_SReceiveCallbackData
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct FfiReceiveCallbackData {
     pub buffer: *const c_void,
     pub buffer_size: usize,
     pub send_timestamp: i64,

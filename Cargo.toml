@@ -1,2 +1,7 @@
 [workspace]
-members = ["rustecal", "rustecal-sys", "rustecal-demo"]
+members = [
+    "rustecal",
+    "rustecal-sys", 
+    "rustecal-samples/pubsub/hello_send",
+    "rustecal-samples/pubsub/hello_receive"
+]
