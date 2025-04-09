@@ -93,15 +93,19 @@ cargo run
 
 ---
 
+---
+
 ## 🚀 Example: Typed String Publisher
 
 ```rust
-use rustecal::{Ecal, EcalComponents, TypedPublisher};
+use rustecal::{Ecal, TypedPublisher, EcalComponents};
 
 fn main() {
-    Ecal::initialize(Some("minimal string publisher"), EcalComponents::DEFAULT).unwrap();
+    Ecal::initialize(Some("minimal string publisher"), EcalComponents::DEFAULT)
+        .expect("eCAL initialization failed");
 
-    let publisher = TypedPublisher::<String>::new("hello").unwrap();
+    let publisher = TypedPublisher::<String>::new("hello")
+        .expect("Failed to create publisher");
 
     let mut cnt = 0;
     while Ecal::ok() {
@@ -121,10 +125,11 @@ fn main() {
 ## 🚀 Example: Typed String Subscriber
 
 ```rust
-use rustecal::{Ecal, EcalComponents, TypedSubscriber};
+use rustecal::{Ecal, TypedSubscriber, EcalComponents};
 
 fn main() {
-    Ecal::initialize(Some("minimal string subscriber"), EcalComponents::DEFAULT).unwrap();
+    Ecal::initialize(Some("minimal string subscriber"), EcalComponents::DEFAULT)
+        .expect("eCAL initialization failed");
 
     let mut subscriber = TypedSubscriber::<String>::new("hello")
         .expect("Failed to create subscriber");
