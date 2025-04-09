@@ -77,24 +77,6 @@ Expected structure:
 
 ## 📈 Build Instructions
 
-### 🔹 On Windows
-
-```powershell
-cd rustecal-sys
-cargo build
-
-cd ../rustecal
-cargo build
-
-cd ../rustecal-samples/pubsub/hello_send
-cargo run
-
-cd ../hello_receive
-cargo run
-```
-
-### 🔹 On Linux
-
 ```bash
 cd rustecal-sys
 cargo build
@@ -114,7 +96,7 @@ cargo run
 ## 🚀 Example: Typed String Publisher
 
 ```rust
-use rustecal::{Ecal, TypedPublisher, EcalComponents};
+use rustecal::{Ecal, EcalComponents, TypedPublisher};
 
 fn main() {
     Ecal::initialize(Some("minimal string publisher"), EcalComponents::DEFAULT).unwrap();
@@ -139,7 +121,7 @@ fn main() {
 ## 🚀 Example: Typed String Subscriber
 
 ```rust
-use rustecal::{Ecal, TypedSubscriber, EcalComponents};
+use rustecal::{Ecal, EcalComponents, TypedSubscriber};
 
 fn main() {
     Ecal::initialize(Some("minimal string subscriber"), EcalComponents::DEFAULT).unwrap();
@@ -179,8 +161,10 @@ your_workspace/
 ├── rustecal/                    # Safe Rust wrapper API
 └── rustecal-samples/            # Sample applications
     └── pubsub/
-        ├── hello_send/          # Sends hello world messages
-        └── hello_receive/       # Receives hello world messages
+        ├── hello_send/          # Sends hello world string messages
+        ├── hello_receive/       # Receives hello world string messages
+        ├── person_send/         # Sends Protobuf person messages
+        └── person_receive/      # Receives Protobuf person messages
 ```
 
 ---
@@ -190,8 +174,9 @@ your_workspace/
 - [x] Cross-platform build support (Windows + Linux)
 - [x] Safe initialization/finalization
 - [x] Publisher / Subscriber APIs
-- [x] Generic typed pub/sub (`String`, `Vec<u8>`, `prost::Message`)
+- [x] Generic typed pub/sub (`String`, `Vec<u8>`)
 - [x] Closure-based callback support
+- [x] Protobuf support via `prost`
 - [ ] Service client/server support
 - [ ] Configuration module
 - [ ] Monitoring / logging utilities
