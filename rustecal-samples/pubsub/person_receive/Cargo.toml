@@ -1,0 +1,12 @@
+[package]
+name = "person_receive"
+version = "0.1.0"
+edition = "2024"
+build = "build.rs"
+
+[dependencies]
+prost = "0.13.5"
+rustecal = { path = "../../../rustecal" }
+
+[build-dependencies]
+prost-build = "0.13.5"

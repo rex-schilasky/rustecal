@@ -48,7 +48,7 @@ $env:LIBCLANG_PATH = "C:\Program Files\LLVM\bin"
 
 ## 📦 eCAL Library Installation
 
-### 🔷 Windows
+### 🔹 Windows
 
 - Install [eCAL](https://github.com/eclipse-ecal/ecal/releases)
 - Set the environment variable `ECAL_HOME`, e.g.:
@@ -65,7 +65,7 @@ Expected structure:
 └── lib/ecal_core_c.lib  ← eCAL static lib
 ```
 
-### 🔷 Linux
+### 🔹 Linux
 
 - Install system-wide from source or package
 - Headers should be in:
@@ -75,9 +75,9 @@ Expected structure:
 
 ---
 
-## 🔨 Build Instructions
+## 📈 Build Instructions
 
-### 🔷 On Windows
+### 🔹 On Windows
 
 ```powershell
 cd rustecal-sys
@@ -93,7 +93,7 @@ cd ../hello_receive
 cargo run
 ```
 
-### 🔷 On Linux
+### 🔹 On Linux
 
 ```bash
 cd rustecal-sys
@@ -161,10 +161,58 @@ fn main() {
 
 ---
 
+## 🚀 Example: Typed Protobuf Pub/Sub
+
+```rust
+mod people {
+    include!(concat!(env!("OUT_DIR"), "/pb.people.rs"));
+}
+
+use rustecal::{Ecal, TypedPublisher, TypedSubscriber};
+use rustecal::pubsub::typed_publisher::IsProtobufType;
+use rustecal::pubsub::typed_subscriber::IsProtobufType;
+use people::Person;
+
+impl IsProtobufType for Person {}
+
+fn main() {
+    Ecal::initialize(Some("person_example")).unwrap();
+
+    let mut publisher = TypedPublisher::<Person>::new("person").unwrap();
+    let mut subscriber = TypedSubscriber::<Person>::new("person").unwrap();
+
+    subscriber.set_callback(|msg| {
+        println!("Received Person: id={} name={} email={} stype={}",
+            msg.id, msg.name, msg.email, msg.stype);
+    });
+
+    let mut id = 1;
+    while Ecal::ok() {
+        let person = Person {
+            id,
+            name: "Max".into(),
+            stype: 1,
+            email: "max@mail.net".into(),
+            dog: None,
+            house: None,
+        };
+        publisher.send(&person);
+        println!("Sent Person #{}", id);
+        id += 1;
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+
+    Ecal::finalize();
+}
+```
+
+---
+
 ## ✅ Supported Message Types
 
 - `String` – UTF-8 encoded text (encoding: `"utf-8"`)
 - `Vec<u8>` – Raw binary data (encoding: `"raw"`)
+- `prost::Message` (Protobuf) – Requires `IsProtobufType` marker trait
 
 You can add your own types by implementing the `PublisherMessage` / `SubscriberMessage` traits.
 
@@ -179,22 +227,24 @@ your_workspace/
 └── rustecal-samples/            # Sample applications
     └── pubsub/
         ├── hello_send/          # Sends hello world messages
-        └── hello_receive/       # Receives hello world messages
+        ├── hello_receive/       # Receives hello world messages
+        ├── person_send/         # Sends protobuf person messages
+        └── person_receive/      # Receives protobuf person messages
 ```
 
 ---
 
-## 🧱 Roadmap
+## 🧱️ Roadmap
 
 - [x] Cross-platform build support (Windows + Linux)
 - [x] Safe initialization/finalization
 - [x] Publisher / Subscriber APIs
-- [x] Generic typed pub/sub (`String`, `Vec<u8>`, ...)
+- [x] Generic typed pub/sub (`String`, `Vec<u8>`, `prost::Message`)
 - [x] Closure-based callback support
 - [ ] Service client/server support
 - [ ] Configuration module
 - [ ] Monitoring / logging utilities
-- [ ] Protobuf support via `prost` or `nanopb`
+- [ ] Protobuf descriptor support
 - [ ] Performance benchmarking tools
 
 ---
@@ -202,7 +252,7 @@ your_workspace/
 ## 👨‍💻 Author
 
 Created by Rex Schilasky  
-🚗 Automotive | 🧠 SDV | 🧰 Rust | 🛰️ IPC
+🚗 Automotive | 🧠 SDV | 🛠️ Rust | 🚀 IPC
 
 ---
 

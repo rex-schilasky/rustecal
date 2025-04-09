@@ -6,12 +6,21 @@ use std::ffi::c_void;
 use std::marker::PhantomData;
 use std::slice;
 use std::str;
+use std::cell::RefCell;
+use std::thread_local;
 
+use prost::Message;
+
+/// Marker trait to enable blanket impl for prost types
+pub trait IsProtobufType {}
+
+/// A message that can be subscribed to from eCAL
 pub trait SubscriberMessage: Sized {
     fn datatype() -> DataTypeInfo;
     fn from_bytes(bytes: &[u8]) -> Option<Self>;
 }
 
+// === Raw bytes ===
 impl SubscriberMessage for Vec<u8> {
     fn datatype() -> DataTypeInfo {
         DataTypeInfo {
@@ -26,6 +35,7 @@ impl SubscriberMessage for Vec<u8> {
     }
 }
 
+// === UTF-8 Strings ===
 impl SubscriberMessage for String {
     fn datatype() -> DataTypeInfo {
         DataTypeInfo {
@@ -40,6 +50,25 @@ impl SubscriberMessage for String {
     }
 }
 
+// === Protobuf Support ===
+impl<T> SubscriberMessage for T
+where
+    T: Message + Default + IsProtobufType,
+{
+    fn datatype() -> DataTypeInfo {
+        DataTypeInfo {
+            encoding: "proto".to_string(),
+            type_name: std::any::type_name::<T>().to_string(),
+            descriptor: vec![], // Add descriptor bytes if needed
+        }
+    }
+
+    fn from_bytes(bytes: &[u8]) -> Option<Self> {
+        T::decode(bytes).ok()
+    }
+}
+
+// === TypedSubscriber wrapper ===
 pub struct TypedSubscriber<T: SubscriberMessage> {
     subscriber: Subscriber,
     _phantom: PhantomData<T>,
@@ -79,9 +108,7 @@ impl<T: SubscriberMessage> TypedSubscriber<T> {
     }
 }
 
-use std::cell::RefCell;
-use std::thread_local;
-
+// === Trampoline: dispatch to closure ===
 type CallbackFn = Box<dyn Fn(&[u8]) + Send + Sync + 'static>;
 
 thread_local! {
@@ -98,6 +125,7 @@ extern "C" fn trampoline(
         if data.is_null() {
             return;
         }
+
         let msg_slice = slice::from_raw_parts((*data).buffer as *const u8, (*data).buffer_size);
         CALLBACK.with(|cb| {
             if let Some(callback) = &*cb.borrow() {

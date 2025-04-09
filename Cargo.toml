@@ -3,5 +3,6 @@ members = [
     "rustecal",
     "rustecal-sys", 
     "rustecal-samples/pubsub/hello_send",
-    "rustecal-samples/pubsub/hello_receive"
-]
+    "rustecal-samples/pubsub/hello_receive",
+    "rustecal-samples/pubsub/person_send",
+    "rustecal-samples/pubsub/person_receive"]
