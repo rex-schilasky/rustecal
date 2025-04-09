@@ -1,5 +1,4 @@
-use rustecal::{Ecal};
-use rustecal::pubsub::typed_subscriber::TypedSubscriber;
+use rustecal::{Ecal, TypedSubscriber};
 
 fn main() {
     Ecal::initialize(Some("minimal string subscriber rust")).unwrap();

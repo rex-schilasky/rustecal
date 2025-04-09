@@ -10,8 +10,8 @@ mod environment {
 
 use rustecal::{Ecal, TypedPublisher};
 use rustecal::pubsub::typed_publisher::IsProtobufType;
-use people::Person;
 
+use people::Person;
 impl IsProtobufType for Person {}
 
 fn main() {
