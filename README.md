@@ -136,6 +136,31 @@ fn main() {
 
 ---
 
+## 🚀 Example: Typed String Subscriber
+
+```rust
+use rustecal::{Ecal, TypedSubscriber};
+
+fn main() {
+    Ecal::initialize(Some("minimal string subscriber")).unwrap();
+
+    let mut subscriber = TypedSubscriber::<String>::new("hello")
+        .expect("Failed to create subscriber");
+
+    subscriber.set_callback(|msg| {
+        println!("Received: {}", msg);
+    });
+
+    while Ecal::ok() {
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+
+    Ecal::finalize();
+}
+```
+
+---
+
 ## ✅ Supported Message Types
 
 - `String` – UTF-8 encoded text (encoding: `"utf-8"`)
