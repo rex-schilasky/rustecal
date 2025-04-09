@@ -8,14 +8,14 @@ mod environment {
     include!(concat!(env!("OUT_DIR"), "/pb.environment.rs"));
 }
 
-use rustecal::{Ecal, TypedSubscriber};
+use rustecal::{Ecal, EcalComponents, TypedSubscriber};
 use rustecal::pubsub::typed_subscriber::IsProtobufType;
 
 use people::Person;
 impl IsProtobufType for people::Person {}
 
 fn main() {
-    Ecal::initialize(Some("person receive rust")).unwrap();
+    Ecal::initialize(Some("person receive rust"), EcalComponents::DEFAULT).unwrap();
 
     let mut subscriber = TypedSubscriber::<Person>::new("person").unwrap();
 

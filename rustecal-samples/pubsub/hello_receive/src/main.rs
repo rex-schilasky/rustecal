@@ -1,7 +1,7 @@
-use rustecal::{Ecal, TypedSubscriber};
+use rustecal::{Ecal, EcalComponents, TypedSubscriber};
 
 fn main() {
-    Ecal::initialize(Some("minimal string subscriber rust")).unwrap();
+    Ecal::initialize(Some("minimal string subscriber rust"), EcalComponents::DEFAULT).unwrap();
 
     let mut sub = TypedSubscriber::<String>::new("hello").expect("Failed to create subscriber");
     sub.set_callback(|msg| {

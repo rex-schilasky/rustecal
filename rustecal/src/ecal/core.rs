@@ -1,16 +1,17 @@
 use std::ffi::CString;
+use crate::ecal::components::EcalComponents;
 use rustecal_sys;
 
 pub struct Ecal;
 
 impl Ecal {
-    /// Initialize eCAL
-    pub fn initialize(unit_name: Option<&str>) -> Result<(), i32> {
+    /// Initialize eCAL with specific components
+    pub fn initialize(unit_name: Option<&str>, components: EcalComponents) -> Result<(), i32> {
         let cstr = unit_name.map(|s| CString::new(s).unwrap());
         let ptr = cstr.as_ref().map_or(std::ptr::null(), |c| c.as_ptr());
 
         let result = unsafe {
-            rustecal_sys::eCAL_Initialize(ptr, std::ptr::null(), std::ptr::null())
+            rustecal_sys::eCAL_Initialize(ptr, &components.bits(), std::ptr::null())
         };
 
         if result == 0 {

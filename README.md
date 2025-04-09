@@ -114,10 +114,10 @@ cargo run
 ## 🚀 Example: Typed String Publisher
 
 ```rust
-use rustecal::{Ecal, TypedPublisher};
+use rustecal::{Ecal, TypedPublisher, EcalComponents};
 
 fn main() {
-    Ecal::initialize(Some("minimal string publisher")).unwrap();
+    Ecal::initialize(Some("minimal string publisher"), EcalComponents::DEFAULT).unwrap();
 
     let publisher = TypedPublisher::<String>::new("hello").unwrap();
 
@@ -139,10 +139,10 @@ fn main() {
 ## 🚀 Example: Typed String Subscriber
 
 ```rust
-use rustecal::{Ecal, TypedSubscriber};
+use rustecal::{Ecal, TypedSubscriber, EcalComponents};
 
 fn main() {
-    Ecal::initialize(Some("minimal string subscriber")).unwrap();
+    Ecal::initialize(Some("minimal string subscriber"), EcalComponents::DEFAULT).unwrap();
 
     let mut subscriber = TypedSubscriber::<String>::new("hello")
         .expect("Failed to create subscriber");
@@ -152,53 +152,6 @@ fn main() {
     });
 
     while Ecal::ok() {
-        std::thread::sleep(std::time::Duration::from_millis(500));
-    }
-
-    Ecal::finalize();
-}
-```
-
----
-
-## 🚀 Example: Typed Protobuf Pub/Sub
-
-```rust
-mod people {
-    include!(concat!(env!("OUT_DIR"), "/pb.people.rs"));
-}
-
-use rustecal::{Ecal, TypedPublisher, TypedSubscriber};
-use rustecal::pubsub::typed_publisher::IsProtobufType;
-use rustecal::pubsub::typed_subscriber::IsProtobufType;
-use people::Person;
-
-impl IsProtobufType for Person {}
-
-fn main() {
-    Ecal::initialize(Some("person_example")).unwrap();
-
-    let mut publisher = TypedPublisher::<Person>::new("person").unwrap();
-    let mut subscriber = TypedSubscriber::<Person>::new("person").unwrap();
-
-    subscriber.set_callback(|msg| {
-        println!("Received Person: id={} name={} email={} stype={}",
-            msg.id, msg.name, msg.email, msg.stype);
-    });
-
-    let mut id = 1;
-    while Ecal::ok() {
-        let person = Person {
-            id,
-            name: "Max".into(),
-            stype: 1,
-            email: "max@mail.net".into(),
-            dog: None,
-            house: None,
-        };
-        publisher.send(&person);
-        println!("Sent Person #{}", id);
-        id += 1;
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
 
@@ -227,14 +180,12 @@ your_workspace/
 └── rustecal-samples/            # Sample applications
     └── pubsub/
         ├── hello_send/          # Sends hello world messages
-        ├── hello_receive/       # Receives hello world messages
-        ├── person_send/         # Sends protobuf person messages
-        └── person_receive/      # Receives protobuf person messages
+        └── hello_receive/       # Receives hello world messages
 ```
 
 ---
 
-## 🧱️ Roadmap
+## 🧱 Roadmap
 
 - [x] Cross-platform build support (Windows + Linux)
 - [x] Safe initialization/finalization

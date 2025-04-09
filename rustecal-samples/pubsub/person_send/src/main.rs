@@ -8,14 +8,14 @@ mod environment {
     include!(concat!(env!("OUT_DIR"), "/pb.environment.rs"));
 }
 
-use rustecal::{Ecal, TypedPublisher};
+use rustecal::{Ecal, EcalComponents, TypedPublisher};
 use rustecal::pubsub::typed_publisher::IsProtobufType;
 
 use people::Person;
 impl IsProtobufType for Person {}
 
 fn main() {
-    Ecal::initialize(Some("person send rust")).unwrap();
+    Ecal::initialize(Some("person send rust"), EcalComponents::DEFAULT).unwrap();
 
     let publisher = TypedPublisher::<Person>::new("person").unwrap();
 

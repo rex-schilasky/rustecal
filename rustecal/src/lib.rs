@@ -1,7 +1,8 @@
 pub mod pubsub;
 pub mod ecal;
 
-pub use ecal::Ecal;
+pub use ecal::core::Ecal;
+pub use ecal::components::EcalComponents;
 
 pub use pubsub::{
     TypedSubscriber,
