@@ -15,10 +15,10 @@ This project consists of three Rust crates:
 ## 📦 Project Structure
 
 | Crate               | Description                                         |
-|--------------------|------------------------------------------------------|
-| `rustecal-sys`      | Low-level unsafe bindings (via `bindgen`)           |
-| `rustecal`          | Safe Rust abstraction for eCAL users                |
-| `rustecal-samples`  | Sample apps                                         |
+|--------------------|-----------------------------------------------------|
+| `rustecal-sys`     | Low-level unsafe bindings (via `bindgen`)           |
+| `rustecal`         | Safe Rust abstraction for eCAL users                |
+| `rustecal-samples` | Sample apps demonstrating pub/sub and other features|
 
 ---
 
@@ -111,6 +111,40 @@ cargo run
 
 ---
 
+## 🚀 Example: Typed String Publisher
+
+```rust
+use rustecal::{Ecal, TypedPublisher};
+
+fn main() {
+    Ecal::initialize(Some("minimal string publisher")).unwrap();
+
+    let publisher = TypedPublisher::<String>::new("hello").unwrap();
+
+    let mut cnt = 0;
+    while Ecal::ok() {
+        let msg = format!("HELLO WORLD FROM RUST ({})", cnt);
+        publisher.send(&msg);
+        println!("Sent: {}", msg);
+        cnt += 1;
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+
+    Ecal::finalize();
+}
+```
+
+---
+
+## ✅ Supported Message Types
+
+- `String` – UTF-8 encoded text (encoding: `"utf-8"`)
+- `Vec<u8>` – Raw binary data (encoding: `"raw"`)
+
+You can add your own types by implementing the `PublisherMessage` / `SubscriberMessage` traits.
+
+---
+
 ## 📁 Workspace Layout
 
 ```
@@ -119,11 +153,9 @@ your_workspace/
 ├── rustecal/                    # Safe Rust wrapper API
 └── rustecal-samples/            # Sample applications
     └── pubsub/
-        ├── hello_send/          # Sends string messages
-        └── hello_receive/       # Receives and prints them
+        ├── hello_send/          # Sends hello world messages
+        └── hello_receive/       # Receives hello world messages
 ```
-
-You can define a top-level workspace in `Cargo.toml` to manage builds across all crates.
 
 ---
 
@@ -131,12 +163,14 @@ You can define a top-level workspace in `Cargo.toml` to manage builds across all
 
 - [x] Cross-platform build support (Windows + Linux)
 - [x] Safe initialization/finalization
-- [ ] Publisher / Subscriber APIs
+- [x] Publisher / Subscriber APIs
+- [x] Generic typed pub/sub (`String`, `Vec<u8>`, ...)
+- [x] Closure-based callback support
 - [ ] Service client/server support
 - [ ] Configuration module
 - [ ] Monitoring / logging utilities
 - [ ] Protobuf support via `prost` or `nanopb`
-- [ ] Closure-based safe callback system
+- [ ] Performance benchmarking tools
 
 ---
 
