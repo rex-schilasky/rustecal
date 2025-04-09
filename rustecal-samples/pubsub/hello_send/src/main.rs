@@ -1,7 +1,7 @@
 use rustecal::{Ecal, EcalComponents, TypedPublisher};
 
 fn main() {
-    Ecal::initialize(Some("minimal string publisher rust"), EcalComponents::DEFAULT)
+    Ecal::initialize(Some("hello string publisher rust"), EcalComponents::DEFAULT)
         .expect("eCAL initialization failed");
 
     let publisher = TypedPublisher::<String>::new("hello")

@@ -15,9 +15,11 @@ use people::Person;
 impl IsProtobufType for Person {}
 
 fn main() {
-    Ecal::initialize(Some("person send rust"), EcalComponents::DEFAULT).unwrap();
+    Ecal::initialize(Some("person protobuf publisher rust"), EcalComponents::DEFAULT)
+        .expect("eCAL initialization failed");
 
-    let publisher = TypedPublisher::<Person>::new("person").unwrap();
+    let publisher = TypedPublisher::<Person>::new("person")
+        .expect("Failed to create publisher");
 
     let mut cnt = 0;
     while Ecal::ok() {

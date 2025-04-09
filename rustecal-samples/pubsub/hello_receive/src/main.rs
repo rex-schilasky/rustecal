@@ -1,10 +1,13 @@
 use rustecal::{Ecal, EcalComponents, TypedSubscriber};
 
 fn main() {
-    Ecal::initialize(Some("minimal string subscriber rust"), EcalComponents::DEFAULT).unwrap();
+    Ecal::initialize(Some("hello string subscriber rust"), EcalComponents::DEFAULT)
+        .expect("eCAL initialization failed");
 
-    let mut sub = TypedSubscriber::<String>::new("hello").expect("Failed to create subscriber");
-    sub.set_callback(|msg| {
+    let mut subscriber = TypedSubscriber::<String>::new("hello")
+        .expect("Failed to create subscriber");
+
+    subscriber.set_callback(|msg| {
         println!("Received: {}", msg);
     });
 

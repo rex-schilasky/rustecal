@@ -15,9 +15,11 @@ use people::Person;
 impl IsProtobufType for people::Person {}
 
 fn main() {
-    Ecal::initialize(Some("person receive rust"), EcalComponents::DEFAULT).unwrap();
+    Ecal::initialize(Some("person protobuf subscriber rust"), EcalComponents::DEFAULT)
+        .expect("eCAL initialization failed");
 
-    let mut subscriber = TypedSubscriber::<Person>::new("person").unwrap();
+    let mut subscriber = TypedSubscriber::<Person>::new("person")
+        .expect("Failed to create subscriber");
 
     subscriber.set_callback(|msg: Person| {
         println!("person id    : {}", msg.id);
