@@ -1,21 +1,21 @@
-# rustecal – Safe Rust Bindings for Eclipse eCAL 🚀
+# rustecal – Safe Rust Bindings for Eclipse eCAL
 
-`rustecal` is a safe and idiomatic Rust wrapper for the [Eclipse eCAL](https://github.com/eclipse-ecal/ecal) C API, designed for high-performance interprocess communication (IPC) in robotics, automotive, and embedded systems.
+`rustecal` is a safe and idiomatic Rust wrapper for the [Eclipse eCAL](https://github.com/eclipse-ecal/ecal), designed for high-performance interprocess communication (IPC) in robotics, automotive, and embedded systems.
 
 This project consists of multiple Rust crates:
 
 ```
-📦 rustecal-sys             – raw FFI bindings to the eCAL C API (generated via bindgen)
-📦 rustecal                 – safe high-level Rust wrapper over rustecal-sys
-📦 rustecal-types-string    – String message support for rustecal pub/sub
-📦 rustecal-types-bytes     – Bytes (Vec<u8>) message support for rustecal pub/sub
-📦 rustecal-types-protobuf  – Protobuf message support (via prost)
-📦 rustecal-samples         – Sample applications using rustecal (pub/sub)
+ rustecal-sys             – raw FFI bindings to the eCAL C API (generated via bindgen)
+ rustecal                 – safe high-level Rust wrapper over rustecal-sys
+ rustecal-types-string    – String message support for rustecal pub/sub
+ rustecal-types-bytes     – Bytes (Vec<u8>) message support for rustecal pub/sub
+ rustecal-types-protobuf  – Protobuf message support (via prost)
+ rustecal-samples         – Sample applications using rustecal (pub/sub)
 ```
 
 ---
 
-## 📦 Project Structure
+## Project Structure
 
 | Crate                      | Description                                               |
 |---------------------------|-----------------------------------------------------------|
@@ -28,21 +28,21 @@ This project consists of multiple Rust crates:
 
 ---
 
-## 🛠️ Prerequisites
+## Prerequisites
 
-### ✅ Rust Toolchain
+### Rust Toolchain
 
 - [Rust](https://rustup.rs/) >= 1.70
 - `cargo`, `rustc`
 
-### ✅ LLVM + libclang (required for `bindgen`)
+### LLVM + libclang (required for `bindgen`)
 
 | Platform | Install                        |
 |----------|--------------------------------|
 | Windows  | `choco install llvm` or use [LLVM releases](https://github.com/llvm/llvm-project/releases) |
 | Linux    | `sudo apt install llvm-dev clang` |
 
-### ✅ Environment Variable for Bindgen (Windows only)
+### Environment Variable for Bindgen (Windows only)
 
 Set `LIBCLANG_PATH` (adjust if using custom install):
 
@@ -52,9 +52,9 @@ $env:LIBCLANG_PATH = "C:\Program Files\LLVM\bin"
 
 ---
 
-## 📦 eCAL Library Installation
+## eCAL Library Installation
 
-### 🔹 Windows
+### Windows
 
 - Install [eCAL](https://github.com/eclipse-ecal/ecal/releases)
 - Set the environment variable `ECAL_HOME`, e.g.:
@@ -71,7 +71,7 @@ Expected structure:
 └── lib/ecal_core_c.lib  ← eCAL static lib
 ```
 
-### 🔹 Linux
+### Linux
 
 - Install system-wide from source or package
 - Headers should be in:
@@ -81,142 +81,154 @@ Expected structure:
 
 ---
 
-## 🧪 Examples
+## Examples
 
-### ✅ StringMessage Publisher
-
-```rust
-use rustecal::{Ecal, EcalComponents, TypedPublisher};
-use rustecal_types_string::StringMessage;
-
-fn main() {
-    Ecal::initialize(Some("hello string publisher rust"), EcalComponents::DEFAULT)
-        .expect("eCAL initialization failed");
-
-    let publisher = TypedPublisher::<StringMessage>::new("hello")
-        .expect("Failed to create publisher");
-
-    let mut cnt = 0;
-    while Ecal::ok() {
-        let msg = format!("HELLO WORLD FROM RUST ({})", cnt);
-        publisher.send(&StringMessage(msg));
-        cnt += 1;
-        std::thread::sleep(std::time::Duration::from_millis(500));
-    }
-
-    Ecal::finalize();
-}
-```
-
-### ✅ StringMessage Subscriber
-
-```rust
-use rustecal::{Ecal, EcalComponents, TypedSubscriber};
-use rustecal_types_string::StringMessage;
-
-fn main() {
-    Ecal::initialize(Some("hello string subscriber rust"), EcalComponents::DEFAULT)
-        .expect("eCAL initialization failed");
-
-    let mut subscriber = TypedSubscriber::<StringMessage>::new("hello")
-        .expect("Failed to create subscriber");
-
-    subscriber.set_callback(|msg: StringMessage| {
-        println!("Received: {}", msg.0);
-    });
-
-    while Ecal::ok() {
-        std::thread::sleep(std::time::Duration::from_millis(500));
-    }
-
-    Ecal::finalize();
-}
-```
-
----
-
-### ✅ BytesMessage Publisher
+### Binary Publisher
 
 ```rust
 use rustecal::{Ecal, EcalComponents, TypedPublisher};
 use rustecal_types_bytes::BytesMessage;
 
 fn main() {
-    Ecal::initialize(Some("bytes publisher rust"), EcalComponents::DEFAULT)
-        .expect("eCAL initialization failed");
-
-    let publisher = TypedPublisher::<BytesMessage>::new("data")
-        .expect("Failed to create publisher");
-
-    let data = BytesMessage(vec![0xde, 0xad, 0xbe, 0xef]);
-    publisher.send(&data);
-
-    Ecal::finalize();
+    Ecal::initialize(Some("blob publisher"), EcalComponents::DEFAULT).unwrap();
+    let pub_ = TypedPublisher::<BytesMessage>::new("blob").unwrap();
+    let mut counter = 0u8;
+    loop {
+        let buf = vec![counter; 1024];
+        pub_.send(&BytesMessage(buf));
+        counter = counter.wrapping_add(1);
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
 }
 ```
 
-### ✅ BytesMessage Subscriber
+### Binary Subscriber
 
 ```rust
 use rustecal::{Ecal, EcalComponents, TypedSubscriber};
 use rustecal_types_bytes::BytesMessage;
 
 fn main() {
-    Ecal::initialize(Some("bytes subscriber rust"), EcalComponents::DEFAULT)
-        .expect("eCAL initialization failed");
-
-    let mut subscriber = TypedSubscriber::<BytesMessage>::new("data")
-        .expect("Failed to create subscriber");
-
-    subscriber.set_callback(|msg: BytesMessage| {
-        println!("Received bytes: {:x?}", msg.0);
+    Ecal::initialize(Some("blob subscriber"), EcalComponents::DEFAULT).unwrap();
+    let mut sub = TypedSubscriber::<BytesMessage>::new("blob").unwrap();
+    sub.set_callback(|msg| {
+        println!("Received blob of {} bytes", msg.msg.0.len());
     });
+    while Ecal::ok() {
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+}
+```
 
+### String Publisher
+
+```rust
+use rustecal::{Ecal, EcalComponents, TypedPublisher};
+use rustecal_types_string::StringMessage;
+
+fn main() {
+    Ecal::initialize(Some("string publisher"), EcalComponents::DEFAULT).unwrap();
+    let publisher = TypedPublisher::<StringMessage>::new("hello").unwrap();
+    loop {
+        let msg = StringMessage(format!("Hello from Rust"));
+        publisher.send(&msg);
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+}
+```
+
+### String Subscriber
+
+```rust
+use rustecal::{Ecal, EcalComponents, TypedSubscriber};
+use rustecal_types_string::StringMessage;
+
+fn main() {
+    Ecal::initialize(Some("string subscriber"), EcalComponents::DEFAULT).unwrap();
+    let mut sub = TypedSubscriber::<StringMessage>::new("hello").unwrap();
+    sub.set_callback(|msg| println!("Received: {}", msg.msg.0));
     while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+}
+```
 
-    Ecal::finalize();
+### Protobuf Publisher
+
+```rust
+use rustecal::{Ecal, EcalComponents, TypedPublisher};
+use rustecal_types_protobuf::{ProtobufMessage, IsProtobufType};
+mod person { include!(concat!(env!("OUT_DIR"), "/pb.people.rs")); }
+use person::Person;
+
+impl IsProtobufType for Person {}
+
+fn main() {
+    Ecal::initialize(Some("protobuf publisher"), EcalComponents::DEFAULT).unwrap();
+    let pub_ = TypedPublisher::<ProtobufMessage<Person>>::new("person").unwrap();
+    loop {
+        let person = Person { id: 1, name: "Alice".into(), ..Default::default() };
+        pub_.send(&ProtobufMessage(person));
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+}
+```
+
+### Protobuf Subscriber
+
+```rust
+use rustecal::{Ecal, EcalComponents, TypedSubscriber};
+use rustecal_types_protobuf::ProtobufMessage;
+mod person { include!(concat!(env!("OUT_DIR"), "/pb.people.rs")); }
+use person::Person;
+
+fn main() {
+    Ecal::initialize(Some("protobuf subscriber"), EcalComponents::DEFAULT).unwrap();
+    let mut sub = TypedSubscriber::<ProtobufMessage<Person>>::new("person").unwrap();
+    sub.set_callback(|msg| println!("Received person: {}", msg.msg.0.name));
+    while Ecal::ok() {
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
 }
 ```
 
 ---
 
-## ✅ Supported Message Types
+## Supported Message Types
 
-- `StringMessage` – UTF-8 encoded text
 - `BytesMessage` – Arbitrary binary data
+- `StringMessage` – UTF-8 encoded text
 - `ProtobufMessage<T>` – Protobuf-encoded structs (via prost)
 
 Each type is provided by an external crate:  
-- `rustecal-types-string`  
 - `rustecal-types-bytes`  
+- `rustecal-types-string`  
 - `rustecal-types-protobuf`
 
 ---
 
-## 📁 Workspace Layout
+## Workspace Layout
 
 ```
 your_workspace/
 ├── rustecal-sys/                  # Raw C FFI bindings
 ├── rustecal/                      # High-level safe API
-├── rustecal-types-string/         # StringMessage wrapper crate
 ├── rustecal-types-bytes/          # BytesMessage wrapper crate
+├── rustecal-types-string/         # StringMessage wrapper crate
 ├── rustecal-types-protobuf/       # ProtobufMessage wrapper crate
 └── rustecal-samples/              # Sample applications
     └── pubsub/
+        ├── blob_send/             # Sends byte messages
+        ├── blob_receive/          # Receives byte messages
         ├── hello_send/            # Sends string messages
         ├── hello_receive/         # Receives string messages
-        ├── bytes_send/            # Sends byte messages
-        ├── bytes_receive/         # Receives byte messages
         ├── person_send/           # Sends protobuf messages
         └── person_receive/        # Receives protobuf messages
 ```
 
 ---
 
-## 🧱 Roadmap
+## Roadmap
 
 - [x] Cross-platform build support (Windows + Linux)
 - [x] Safe initialization/finalization
@@ -232,13 +244,13 @@ your_workspace/
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 Created by Rex Schilasky  
 🚗 Automotive | 🧠 SDV | 🛠️ Rust | 🚀 IPC
 
 ---
 
-## 📄 License
+## License
 
 Licensed under the [Apache 2.0 License](LICENSE)

@@ -1,5 +1,5 @@
 [package]
-name = "bytes_send"
+name = "blob_receive"
 version = "0.1.0"
 edition = "2024"
 
