@@ -1,11 +1,11 @@
 use crate::pubsub::subscriber::Subscriber;
 use crate::pubsub::types::DataTypeInfo;
+use prost::Message;
 use rustecal_sys::{eCAL_SDataTypeInformation, eCAL_SReceiveCallbackData, eCAL_STopicId};
 use std::ffi::c_void;
 use std::marker::PhantomData;
 use std::slice;
 use std::str;
-use prost::Message;
 
 /// Marker trait to enable blanket impl for prost types
 pub trait IsProtobufType {}
@@ -55,7 +55,7 @@ where
         DataTypeInfo {
             encoding: "proto".to_string(),
             type_name: std::any::type_name::<T>().to_string(),
-            descriptor: vec![], // Add descriptor bytes if needed
+            descriptor: vec![],
         }
     }
 
@@ -64,72 +64,82 @@ where
     }
 }
 
-// === Internal wrapper to pass closure to callback ===
-type CallbackFn<T> = Box<dyn Fn(T) + Send + Sync>;
-
-struct CallbackHolder<T: SubscriberMessage> {
-    callback: CallbackFn<T>,
+// === Helper struct to type erase and re-box callback
+struct CallbackWrapper<T: SubscriberMessage> {
+    callback: Box<dyn Fn(T) + Send + Sync>,
 }
 
-// === TypedSubscriber wrapper ===
+impl<T: SubscriberMessage> CallbackWrapper<T> {
+    fn new<F>(f: F) -> Self
+    where
+        F: Fn(T) + Send + Sync + 'static,
+    {
+        Self {
+            callback: Box::new(f),
+        }
+    }
+
+    fn call(&self, bytes: &[u8]) {
+        if let Some(value) = T::from_bytes(bytes) {
+            (self.callback)(value);
+        }
+    }
+}
+
+// === Typed Subscriber ===
 pub struct TypedSubscriber<T: SubscriberMessage> {
     subscriber: Subscriber,
-    user_data: *mut c_void,
+    user_data: *mut CallbackWrapper<T>,
     _phantom: PhantomData<T>,
 }
 
 impl<T: SubscriberMessage> TypedSubscriber<T> {
     pub fn new(topic: &str) -> Result<Self, String> {
-        let holder: Box<CallbackHolder<T>> = Box::new(CallbackHolder {
-            callback: Box::new(|_msg: T| {}),
-        });
-        let user_data = Box::into_raw(holder) as *mut c_void;
-    
         let datatype = T::datatype();
-        let subscriber = Subscriber::new(topic, datatype, trampoline::<T>, user_data)?;
-    
+
+        let boxed: Box<CallbackWrapper<T>> = Box::new(CallbackWrapper::new(|_| {}));
+        let user_data = Box::into_raw(boxed);
+
+        let subscriber = Subscriber::new(topic, datatype, trampoline::<T>, user_data as *mut _)?;
+
         Ok(Self {
             subscriber,
             user_data,
             _phantom: PhantomData,
         })
     }
-    
+
     pub fn set_callback<F>(&mut self, callback: F)
     where
         F: Fn(T) + Send + Sync + 'static,
     {
-        // Replace the boxed callback
-        let holder = Box::new(CallbackHolder {
-            callback: Box::new(callback),
-        });
-        let new_user_data = Box::into_raw(holder) as *mut c_void;
+        unsafe {
+            let _ = Box::from_raw(self.user_data); // Drop old
+        }
+
+        let boxed = Box::new(CallbackWrapper::new(callback));
+        self.user_data = Box::into_raw(boxed);
 
         unsafe {
             rustecal_sys::eCAL_Subscriber_SetReceiveCallback(
                 self.subscriber.raw_handle(),
                 Some(trampoline::<T>),
-                new_user_data,
+                self.user_data as *mut _,
             );
-
-            // Free old one to avoid leak
-            let _ = Box::from_raw(self.user_data as *mut CallbackHolder<T>);
-            self.user_data = new_user_data;
         }
     }
 }
 
 impl<T: SubscriberMessage> Drop for TypedSubscriber<T> {
     fn drop(&mut self) {
-        if !self.user_data.is_null() {
-            unsafe {
-                let _ = Box::from_raw(self.user_data as *mut CallbackHolder<T>);
-            }
+        unsafe {
+            rustecal_sys::eCAL_Subscriber_RemoveReceiveCallback(self.subscriber.raw_handle());
+            let _ = Box::from_raw(self.user_data);
         }
     }
 }
 
-// === Trampoline: Dispatch to Boxed Fn ===
+// === Trampoline ===
 extern "C" fn trampoline<T: SubscriberMessage>(
     _topic_id: *const eCAL_STopicId,
     _data_type_info: *const eCAL_SDataTypeInformation,
@@ -142,9 +152,7 @@ extern "C" fn trampoline<T: SubscriberMessage>(
         }
 
         let msg_slice = slice::from_raw_parts((*data).buffer as *const u8, (*data).buffer_size);
-        if let Some(decoded) = T::from_bytes(msg_slice) {
-            let holder = &*(user_data as *const CallbackHolder<T>);
-            (holder.callback)(decoded);
-        }
+        let cb_wrapper = &*(user_data as *const CallbackWrapper<T>);
+        cb_wrapper.call(msg_slice);
     }
 }
