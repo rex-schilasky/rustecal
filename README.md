@@ -72,109 +72,160 @@ Expected structure:
 
 ## Examples
 
-### Binary Publisher
+### Binary Publisher (blob_send)
 
 ```rust
 use rustecal::{Ecal, EcalComponents, TypedPublisher};
 use rustecal_types_bytes::BytesMessage;
 
 fn main() {
+    // Initialize eCAL with a custom process name and default components
     Ecal::initialize(Some("blob publisher"), EcalComponents::DEFAULT).unwrap();
+
+    // Create a typed publisher for raw binary data on topic "blob"
     let pub_ = TypedPublisher::<BytesMessage>::new("blob").unwrap();
+
     let mut counter = 0u8;
     loop {
+        // Create a 1024-byte buffer filled with the current counter value
         let buf = vec![counter; 1024];
+
+        // Wrap it in a BytesMessage and send it
         pub_.send(&BytesMessage(buf));
+
+        // Increment counter for next message
         counter = counter.wrapping_add(1);
-        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        // Wait a bit before sending the next message
+        std::thread::sleep(std::time::Duration::from_millis(500));
     }
 }
 ```
 
-### Binary Subscriber
+### Binary Subscriber (blob_receive)
 
 ```rust
 use rustecal::{Ecal, EcalComponents, TypedSubscriber};
 use rustecal_types_bytes::BytesMessage;
 
 fn main() {
+    // Initialize eCAL
     Ecal::initialize(Some("blob subscriber"), EcalComponents::DEFAULT).unwrap();
+
+    // Create a typed subscriber for raw binary data
     let mut sub = TypedSubscriber::<BytesMessage>::new("blob").unwrap();
+
+    // Set up the receive callback
     sub.set_callback(|msg| {
+        // Print the size of the received buffer
         println!("Received blob of {} bytes", msg.msg.0.len());
     });
+
+    // Keep the process alive to receive messages
     while Ecal::ok() {
-        std::thread::sleep(std::time::Duration::from_millis(100));
+        std::thread::sleep(std::time::Duration::from_millis(500));
     }
 }
 ```
 
-### String Publisher
+### String Publisher (hello_send)
 
 ```rust
 use rustecal::{Ecal, EcalComponents, TypedPublisher};
 use rustecal_types_string::StringMessage;
 
 fn main() {
+    // Initialize eCAL
     Ecal::initialize(Some("string publisher"), EcalComponents::DEFAULT).unwrap();
+
+    // Create a string message publisher on topic "hello"
     let publisher = TypedPublisher::<StringMessage>::new("hello").unwrap();
+
     loop {
+        // Format and send a message
         let msg = StringMessage(format!("Hello from Rust"));
         publisher.send(&msg);
+
+        // Send every 500 ms
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
 }
 ```
 
-### String Subscriber
+### String Subscriber (hello_receive)
 
 ```rust
 use rustecal::{Ecal, EcalComponents, TypedSubscriber};
 use rustecal_types_string::StringMessage;
 
 fn main() {
+    // Initialize eCAL
     Ecal::initialize(Some("string subscriber"), EcalComponents::DEFAULT).unwrap();
+
+    // Create a subscriber for string messages
     let mut sub = TypedSubscriber::<StringMessage>::new("hello").unwrap();
+
+    // Print received messages
     sub.set_callback(|msg| println!("Received: {}", msg.msg.0));
+
+    // Keep the process alive
     while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
 }
 ```
 
-### Protobuf Publisher
+### Protobuf Publisher (person_send)
 
 ```rust
 use rustecal::{Ecal, EcalComponents, TypedPublisher};
 use rustecal_types_protobuf::{ProtobufMessage, IsProtobufType};
+
+// Generated Protobuf struct
 mod person { include!(concat!(env!("OUT_DIR"), "/pb.people.rs")); }
 use person::Person;
 
+// Register the message type
 impl IsProtobufType for Person {}
 
 fn main() {
+    // Initialize eCAL
     Ecal::initialize(Some("protobuf publisher"), EcalComponents::DEFAULT).unwrap();
+
+    // Create a typed publisher for Protobuf messages
     let pub_ = TypedPublisher::<ProtobufMessage<Person>>::new("person").unwrap();
+
     loop {
+        // Create and send a protobuf message
         let person = Person { id: 1, name: "Alice".into(), ..Default::default() };
         pub_.send(&ProtobufMessage(person));
+
+        // Wait before sending next message
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
 }
 ```
 
-### Protobuf Subscriber
+### Protobuf Subscriber (person_receive)
 
 ```rust
 use rustecal::{Ecal, EcalComponents, TypedSubscriber};
 use rustecal_types_protobuf::ProtobufMessage;
+
+// Generated Protobuf struct
 mod person { include!(concat!(env!("OUT_DIR"), "/pb.people.rs")); }
 use person::Person;
 
 fn main() {
+    // Initialize eCAL
     Ecal::initialize(Some("protobuf subscriber"), EcalComponents::DEFAULT).unwrap();
+
+    // Create a subscriber for Protobuf messages
     let mut sub = TypedSubscriber::<ProtobufMessage<Person>>::new("person").unwrap();
+
+    // Extract and print person info from the received message
     sub.set_callback(|msg| println!("Received person: {}", msg.msg.0.name));
+
     while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
