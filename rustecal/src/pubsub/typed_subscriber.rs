@@ -1,14 +1,10 @@
 use crate::pubsub::subscriber::Subscriber;
 use crate::pubsub::types::DataTypeInfo;
 use rustecal_sys::{eCAL_SDataTypeInformation, eCAL_SReceiveCallbackData, eCAL_STopicId};
-use rustecal_sys::eCAL_Subscriber_SetReceiveCallback;
 use std::ffi::c_void;
 use std::marker::PhantomData;
 use std::slice;
 use std::str;
-use std::cell::RefCell;
-use std::thread_local;
-
 use prost::Message;
 
 /// Marker trait to enable blanket impl for prost types
@@ -68,69 +64,87 @@ where
     }
 }
 
+// === Internal wrapper to pass closure to callback ===
+type CallbackFn<T> = Box<dyn Fn(T) + Send + Sync>;
+
+struct CallbackHolder<T: SubscriberMessage> {
+    callback: CallbackFn<T>,
+}
+
 // === TypedSubscriber wrapper ===
 pub struct TypedSubscriber<T: SubscriberMessage> {
     subscriber: Subscriber,
+    user_data: *mut c_void,
     _phantom: PhantomData<T>,
 }
 
 impl<T: SubscriberMessage> TypedSubscriber<T> {
     pub fn new(topic: &str) -> Result<Self, String> {
+        let holder: Box<CallbackHolder<T>> = Box::new(CallbackHolder {
+            callback: Box::new(|_msg: T| {}),
+        });
+        let user_data = Box::into_raw(holder) as *mut c_void;
+    
         let datatype = T::datatype();
-
-        let subscriber = Subscriber::new(topic, datatype, trampoline, std::ptr::null_mut())?;
-
+        let subscriber = Subscriber::new(topic, datatype, trampoline::<T>, user_data)?;
+    
         Ok(Self {
             subscriber,
+            user_data,
             _phantom: PhantomData,
         })
     }
-
+    
     pub fn set_callback<F>(&mut self, callback: F)
     where
         F: Fn(T) + Send + Sync + 'static,
     {
-        CALLBACK.with(|cb| {
-            *cb.borrow_mut() = Some(Box::new(move |bytes: &[u8]| {
-                if let Some(decoded) = T::from_bytes(bytes) {
-                    callback(decoded);
-                }
-            }));
+        // Replace the boxed callback
+        let holder = Box::new(CallbackHolder {
+            callback: Box::new(callback),
         });
+        let new_user_data = Box::into_raw(holder) as *mut c_void;
 
         unsafe {
-            eCAL_Subscriber_SetReceiveCallback(
+            rustecal_sys::eCAL_Subscriber_SetReceiveCallback(
                 self.subscriber.raw_handle(),
-                Some(trampoline),
-                std::ptr::null_mut(),
+                Some(trampoline::<T>),
+                new_user_data,
             );
+
+            // Free old one to avoid leak
+            let _ = Box::from_raw(self.user_data as *mut CallbackHolder<T>);
+            self.user_data = new_user_data;
         }
     }
 }
 
-// === Trampoline: dispatch to closure ===
-type CallbackFn = Box<dyn Fn(&[u8]) + Send + Sync + 'static>;
-
-thread_local! {
-    static CALLBACK: RefCell<Option<CallbackFn>> = RefCell::new(None);
+impl<T: SubscriberMessage> Drop for TypedSubscriber<T> {
+    fn drop(&mut self) {
+        if !self.user_data.is_null() {
+            unsafe {
+                let _ = Box::from_raw(self.user_data as *mut CallbackHolder<T>);
+            }
+        }
+    }
 }
 
-extern "C" fn trampoline(
+// === Trampoline: Dispatch to Boxed Fn ===
+extern "C" fn trampoline<T: SubscriberMessage>(
     _topic_id: *const eCAL_STopicId,
     _data_type_info: *const eCAL_SDataTypeInformation,
     data: *const eCAL_SReceiveCallbackData,
-    _user_data: *mut c_void,
+    user_data: *mut c_void,
 ) {
     unsafe {
-        if data.is_null() {
+        if data.is_null() || user_data.is_null() {
             return;
         }
 
         let msg_slice = slice::from_raw_parts((*data).buffer as *const u8, (*data).buffer_size);
-        CALLBACK.with(|cb| {
-            if let Some(callback) = &*cb.borrow() {
-                callback(msg_slice);
-            }
-        });
+        if let Some(decoded) = T::from_bytes(msg_slice) {
+            let holder = &*(user_data as *const CallbackHolder<T>);
+            (holder.callback)(decoded);
+        }
     }
 }
