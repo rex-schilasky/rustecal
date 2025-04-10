@@ -1,0 +1,9 @@
+[package]
+name = "rustecal-types-bytes"
+version = "0.1.0"
+edition = "2024"
+description = "Vec<u8> type support for rustecal TypedPublisher / TypedSubscriber"
+license = "Apache-2.0"
+
+[dependencies]
+rustecal = { path = "../rustecal" }

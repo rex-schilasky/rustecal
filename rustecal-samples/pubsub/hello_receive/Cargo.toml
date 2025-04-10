@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 rustecal = { path = "../../../rustecal" }
+rustecal-types-string = { path = "../../../rustecal-types-string" }

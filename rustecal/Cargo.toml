@@ -7,5 +7,3 @@ edition = "2024"
 rustecal-sys = { path = "../rustecal-sys" }
 
 bitflags = "2.4"
-prost = "0.13.5"
-prost-types = "0.13.5"

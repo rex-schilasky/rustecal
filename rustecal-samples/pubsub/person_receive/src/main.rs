@@ -9,25 +9,28 @@ mod environment {
 }
 
 use rustecal::{Ecal, EcalComponents, TypedSubscriber};
-use rustecal::pubsub::typed_subscriber::IsProtobufType;
+use rustecal_types_protobuf::{ProtobufMessage, IsProtobufType};
 
 use people::Person;
-impl IsProtobufType for people::Person {}
+
+// Implement marker trait to enable ProtobufMessage<Person>
+impl IsProtobufType for Person {}
 
 fn main() {
     Ecal::initialize(Some("person protobuf subscriber rust"), EcalComponents::DEFAULT)
         .expect("eCAL initialization failed");
 
-    let mut subscriber = TypedSubscriber::<Person>::new("person")
+    let mut subscriber = TypedSubscriber::<ProtobufMessage<Person>>::new("person")
         .expect("Failed to create subscriber");
 
-    subscriber.set_callback(|msg: Person| {
-        println!("person id    : {}", msg.id);
-        println!("person name  : {}", msg.name);
-        println!("person stype : {}", msg.stype);
-        println!("person email : {}", msg.email);
-        println!("dog.name     : {}", msg.dog.as_ref().map_or("", |d| &d.name));
-        println!("house.rooms  : {}", msg.house.as_ref().map_or(0, |h| h.rooms));
+    subscriber.set_callback(|msg: ProtobufMessage<Person>| {
+        let person = msg.0;
+        println!("person id    : {}", person.id);
+        println!("person name  : {}", person.name);
+        println!("person stype : {}", person.stype);
+        println!("person email : {}", person.email);
+        println!("dog.name     : {}", person.dog.as_ref().map_or("", |d| &d.name));
+        println!("house.rooms  : {}", person.house.as_ref().map_or(0, |h| h.rooms));
         println!();
     });
 

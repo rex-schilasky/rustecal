@@ -1,0 +1,9 @@
+[package]
+name = "rustecal-types-string"
+version = "0.1.0"
+edition = "2024"
+description = "String type support for rustecal TypedPublisher / TypedSubscriber"
+license = "Apache-2.0"
+
+[dependencies]
+rustecal = { path = "../rustecal" }

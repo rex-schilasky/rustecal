@@ -1,18 +1,20 @@
 use rustecal::{Ecal, EcalComponents, TypedPublisher};
+use rustecal_types_string::StringMessage;
 
 fn main() {
     Ecal::initialize(Some("hello string publisher rust"), EcalComponents::DEFAULT)
         .expect("eCAL initialization failed");
 
-    let publisher = TypedPublisher::<String>::new("hello")
+    let publisher: TypedPublisher<StringMessage> = TypedPublisher::<StringMessage>::new("hello")
         .expect("Failed to create publisher");
 
     let mut cnt = 0;
     while Ecal::ok() {
         cnt += 1;
         let msg = format!("HELLO WORLD FROM RUST ({})", cnt);
-        publisher.send(&msg);
-        println!("Sent: {}", msg);
+        let wrapped = StringMessage(msg);
+        publisher.send(&wrapped);
+        println!("Sent: {}", wrapped.0);
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
 

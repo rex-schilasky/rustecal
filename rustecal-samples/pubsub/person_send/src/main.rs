@@ -9,7 +9,7 @@ mod environment {
 }
 
 use rustecal::{Ecal, EcalComponents, TypedPublisher};
-use rustecal::pubsub::typed_publisher::IsProtobufType;
+use rustecal_types_protobuf::{ProtobufMessage, IsProtobufType};
 
 use people::Person;
 impl IsProtobufType for Person {}
@@ -18,7 +18,7 @@ fn main() {
     Ecal::initialize(Some("person protobuf publisher rust"), EcalComponents::DEFAULT)
         .expect("eCAL initialization failed");
 
-    let publisher = TypedPublisher::<Person>::new("person")
+    let publisher = TypedPublisher::<ProtobufMessage<Person>>::new("person")
         .expect("Failed to create publisher");
 
     let mut cnt = 0;
@@ -39,7 +39,9 @@ fn main() {
             }),
         };
 
-        publisher.send(&person);
+        // Wrap the person struct in ProtobufMessage
+        let wrapped = ProtobufMessage(person.clone());
+        publisher.send(&wrapped);
 
         println!("person id    : {}", person.id);
         println!("person name  : {}", person.name);

@@ -1,70 +1,17 @@
 use crate::pubsub::subscriber::Subscriber;
 use crate::pubsub::types::DataTypeInfo;
-use prost::Message;
 use rustecal_sys::{eCAL_SDataTypeInformation, eCAL_SReceiveCallbackData, eCAL_STopicId};
 use std::ffi::c_void;
 use std::marker::PhantomData;
 use std::slice;
-use std::str;
 
-/// Marker trait to enable blanket impl for prost types
-pub trait IsProtobufType {}
-
-/// A message that can be subscribed to from eCAL
+/// Trait that must be implemented for any type used with `TypedSubscriber`
 pub trait SubscriberMessage: Sized {
     fn datatype() -> DataTypeInfo;
     fn from_bytes(bytes: &[u8]) -> Option<Self>;
 }
 
-// === Raw bytes ===
-impl SubscriberMessage for Vec<u8> {
-    fn datatype() -> DataTypeInfo {
-        DataTypeInfo {
-            encoding: "raw".into(),
-            type_name: "bytes".into(),
-            descriptor: vec![],
-        }
-    }
-
-    fn from_bytes(bytes: &[u8]) -> Option<Self> {
-        Some(bytes.to_vec())
-    }
-}
-
-// === UTF-8 Strings ===
-impl SubscriberMessage for String {
-    fn datatype() -> DataTypeInfo {
-        DataTypeInfo {
-            encoding: "utf-8".to_string(),
-            type_name: "string".to_string(),
-            descriptor: vec![],
-        }
-    }
-
-    fn from_bytes(bytes: &[u8]) -> Option<Self> {
-        str::from_utf8(bytes).ok().map(|s| s.to_string())
-    }
-}
-
-// === Protobuf Support ===
-impl<T> SubscriberMessage for T
-where
-    T: Message + Default + IsProtobufType,
-{
-    fn datatype() -> DataTypeInfo {
-        DataTypeInfo {
-            encoding: "proto".to_string(),
-            type_name: std::any::type_name::<T>().to_string(),
-            descriptor: vec![],
-        }
-    }
-
-    fn from_bytes(bytes: &[u8]) -> Option<Self> {
-        T::decode(bytes).ok()
-    }
-}
-
-// === Helper struct to type erase and re-box callback
+/// Internal callback wrapper for type erasure
 struct CallbackWrapper<T: SubscriberMessage> {
     callback: Box<dyn Fn(T) + Send + Sync>,
 }
@@ -86,7 +33,7 @@ impl<T: SubscriberMessage> CallbackWrapper<T> {
     }
 }
 
-// === Typed Subscriber ===
+/// A type-safe high-level eCAL subscriber
 pub struct TypedSubscriber<T: SubscriberMessage> {
     subscriber: Subscriber,
     user_data: *mut CallbackWrapper<T>,
@@ -97,6 +44,7 @@ impl<T: SubscriberMessage> TypedSubscriber<T> {
     pub fn new(topic: &str) -> Result<Self, String> {
         let datatype = T::datatype();
 
+        // Initially dummy callback, will be replaced in set_callback
         let boxed: Box<CallbackWrapper<T>> = Box::new(CallbackWrapper::new(|_| {}));
         let user_data = Box::into_raw(boxed);
 
@@ -114,7 +62,7 @@ impl<T: SubscriberMessage> TypedSubscriber<T> {
         F: Fn(T) + Send + Sync + 'static,
     {
         unsafe {
-            let _ = Box::from_raw(self.user_data); // Drop old
+            let _ = Box::from_raw(self.user_data); // Drop old one
         }
 
         let boxed = Box::new(CallbackWrapper::new(callback));
@@ -139,7 +87,7 @@ impl<T: SubscriberMessage> Drop for TypedSubscriber<T> {
     }
 }
 
-// === Trampoline ===
+/// eCAL callback trampoline to dispatch to typed closure
 extern "C" fn trampoline<T: SubscriberMessage>(
     _topic_id: *const eCAL_STopicId,
     _data_type_info: *const eCAL_SDataTypeInformation,
