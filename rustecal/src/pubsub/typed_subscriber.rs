@@ -11,24 +11,36 @@ pub trait SubscriberMessage: Sized {
     fn from_bytes(bytes: &[u8]) -> Option<Self>;
 }
 
+/// A received message wrapper that also includes timing info
+pub struct Received<T> {
+    pub msg: T,
+    pub timestamp: i64,
+    pub clock: i64,
+}
+
 /// Internal callback wrapper for type erasure
 struct CallbackWrapper<T: SubscriberMessage> {
-    callback: Box<dyn Fn(T) + Send + Sync>,
+    callback: Box<dyn Fn(Received<T>) + Send + Sync>,
 }
 
 impl<T: SubscriberMessage> CallbackWrapper<T> {
     fn new<F>(f: F) -> Self
     where
-        F: Fn(T) + Send + Sync + 'static,
+        F: Fn(Received<T>) + Send + Sync + 'static,
     {
         Self {
             callback: Box::new(f),
         }
     }
 
-    fn call(&self, bytes: &[u8]) {
+    fn call(&self, bytes: &[u8], timestamp: i64, clock: i64) {
         if let Some(value) = T::from_bytes(bytes) {
-            (self.callback)(value);
+            let received = Received {
+                msg: value,
+                timestamp,
+                clock,
+            };
+            (self.callback)(received);
         }
     }
 }
@@ -44,9 +56,8 @@ impl<T: SubscriberMessage> TypedSubscriber<T> {
     pub fn new(topic: &str) -> Result<Self, String> {
         let datatype = T::datatype();
 
-        // Initially dummy callback, will be replaced in set_callback
-        let boxed: Box<CallbackWrapper<T>> = Box::new(CallbackWrapper::new(|_| {}));
-        let user_data = Box::into_raw(boxed);
+        let dummy: Box<CallbackWrapper<T>> = Box::new(CallbackWrapper::new(|_| {}));
+        let user_data = Box::into_raw(dummy);
 
         let subscriber = Subscriber::new(topic, datatype, trampoline::<T>, user_data as *mut _)?;
 
@@ -59,10 +70,10 @@ impl<T: SubscriberMessage> TypedSubscriber<T> {
 
     pub fn set_callback<F>(&mut self, callback: F)
     where
-        F: Fn(T) + Send + Sync + 'static,
+        F: Fn(Received<T>) + Send + Sync + 'static,
     {
         unsafe {
-            let _ = Box::from_raw(self.user_data); // Drop old one
+            let _ = Box::from_raw(self.user_data);
         }
 
         let boxed = Box::new(CallbackWrapper::new(callback));
@@ -100,7 +111,10 @@ extern "C" fn trampoline<T: SubscriberMessage>(
         }
 
         let msg_slice = slice::from_raw_parts((*data).buffer as *const u8, (*data).buffer_size);
+        let timestamp = (*data).send_timestamp;
+        let clock = (*data).send_clock;
+
         let cb_wrapper = &*(user_data as *const CallbackWrapper<T>);
-        cb_wrapper.call(msg_slice);
+        cb_wrapper.call(msg_slice, timestamp, clock);
     }
 }
