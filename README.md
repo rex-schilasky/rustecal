@@ -1,29 +1,18 @@
 # rustecal – Safe Rust Bindings for Eclipse eCAL
 
-`rustecal` is a safe and idiomatic Rust wrapper for the [Eclipse eCAL](https://github.com/eclipse-ecal/ecal), designed for high-performance interprocess communication (IPC) in robotics, automotive, and embedded systems.
-
-This project consists of multiple Rust crates:
-
-```
- rustecal-sys             – raw FFI bindings to the eCAL C API (generated via bindgen)
- rustecal                 – safe high-level Rust wrapper over rustecal-sys
- rustecal-types-string    – String message support for rustecal pub/sub
- rustecal-types-bytes     – Bytes (Vec<u8>) message support for rustecal pub/sub
- rustecal-types-protobuf  – Protobuf message support (via prost)
- rustecal-samples         – Sample applications using rustecal (pub/sub)
-```
+`rustecal` is a safe and idiomatic Rust wrapper for [Eclipse eCAL](https://github.com/eclipse-ecal/ecal), designed for high-performance interprocess communication (IPC) in robotics, automotive, and embedded systems.
 
 ---
 
 ## Project Structure
 
-| Crate                      | Description                                               |
-|---------------------------|-----------------------------------------------------------|
-| `rustecal-sys`            | Low-level unsafe bindings (via `bindgen`)                 |
-| `rustecal`                | Safe and idiomatic high-level wrapper for eCAL            |
-| `rustecal-types-string`   | Typed support for UTF-8 strings (`StringMessage`)         |
-| `rustecal-types-bytes`    | Typed support for raw bytes (`BytesMessage`)              |
-| `rustecal-types-protobuf` | Typed support for Protobuf types (`ProtobufMessage<T>`)   |
+| Crate                      | Description                                                 |
+|---------------------------|--------------------------------------------------------------|
+| `rustecal-sys`            | Low-level unsafe bindings (via `bindgen`)                    |
+| `rustecal`                | Safe and idiomatic high-level wrapper for eCAL               |
+| `rustecal-types-bytes`    | Typed support for raw bytes (`BytesMessage`)                 |
+| `rustecal-types-string`   | Typed support for UTF-8 strings (`StringMessage`)            |
+| `rustecal-types-protobuf` | Typed support for Protobuf types (`ProtobufMessage<T>`)      |
 | `rustecal-samples`        | Working example binaries for string, bytes, protobuf pub/sub |
 
 ---
@@ -37,8 +26,8 @@ This project consists of multiple Rust crates:
 
 ### LLVM + libclang (required for `bindgen`)
 
-| Platform | Install                        |
-|----------|--------------------------------|
+| Platform | Install                           |
+|----------|-----------------------------------|
 | Windows  | `choco install llvm` or use [LLVM releases](https://github.com/llvm/llvm-project/releases) |
 | Linux    | `sudo apt install llvm-dev clang` |
 
