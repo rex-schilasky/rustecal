@@ -1,0 +1,8 @@
+[package]
+name = "bytes_send"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rustecal = { path = "../../../rustecal" }
+rustecal-types-bytes = { path = "../../../rustecal-types-bytes" }
