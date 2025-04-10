@@ -1,7 +1,7 @@
 use crate::pubsub::subscriber::Subscriber;
 use crate::pubsub::types::DataTypeInfo;
 use rustecal_sys::{eCAL_SDataTypeInformation, eCAL_SReceiveCallbackData, eCAL_STopicId};
-use std::ffi::c_void;
+use std::ffi::{c_void, CStr};
 use std::marker::PhantomData;
 use std::slice;
 
@@ -11,9 +11,12 @@ pub trait SubscriberMessage: Sized {
     fn from_bytes(bytes: &[u8]) -> Option<Self>;
 }
 
-/// A received message wrapper that also includes timing info
+/// Wrapper for received message including metadata
 pub struct Received<T> {
     pub msg: T,
+    pub topic_name: String,
+    pub encoding: String,
+    pub type_name: String,
     pub timestamp: i64,
     pub clock: i64,
 }
@@ -33,15 +36,8 @@ impl<T: SubscriberMessage> CallbackWrapper<T> {
         }
     }
 
-    fn call(&self, bytes: &[u8], timestamp: i64, clock: i64) {
-        if let Some(value) = T::from_bytes(bytes) {
-            let received = Received {
-                msg: value,
-                timestamp,
-                clock,
-            };
-            (self.callback)(received);
-        }
+    fn call(&self, received: Received<T>) {
+        (self.callback)(received);
     }
 }
 
@@ -56,8 +52,8 @@ impl<T: SubscriberMessage> TypedSubscriber<T> {
     pub fn new(topic: &str) -> Result<Self, String> {
         let datatype = T::datatype();
 
-        let dummy: Box<CallbackWrapper<T>> = Box::new(CallbackWrapper::new(|_| {}));
-        let user_data = Box::into_raw(dummy);
+        let boxed: Box<CallbackWrapper<T>> = Box::new(CallbackWrapper::new(|_| {}));
+        let user_data = Box::into_raw(boxed);
 
         let subscriber = Subscriber::new(topic, datatype, trampoline::<T>, user_data as *mut _)?;
 
@@ -100,8 +96,8 @@ impl<T: SubscriberMessage> Drop for TypedSubscriber<T> {
 
 /// eCAL callback trampoline to dispatch to typed closure
 extern "C" fn trampoline<T: SubscriberMessage>(
-    _topic_id: *const eCAL_STopicId,
-    _data_type_info: *const eCAL_SDataTypeInformation,
+    topic_id: *const eCAL_STopicId,
+    data_type_info: *const eCAL_SDataTypeInformation,
     data: *const eCAL_SReceiveCallbackData,
     user_data: *mut c_void,
 ) {
@@ -111,10 +107,24 @@ extern "C" fn trampoline<T: SubscriberMessage>(
         }
 
         let msg_slice = slice::from_raw_parts((*data).buffer as *const u8, (*data).buffer_size);
-        let timestamp = (*data).send_timestamp;
-        let clock = (*data).send_clock;
 
-        let cb_wrapper = &*(user_data as *const CallbackWrapper<T>);
-        cb_wrapper.call(msg_slice, timestamp, clock);
+        if let Some(decoded) = T::from_bytes(msg_slice) {
+            let cb_wrapper = &*(user_data as *const CallbackWrapper<T>);
+
+            let topic_name = CStr::from_ptr((*topic_id).topic_name).to_string_lossy().into_owned();
+            let encoding = CStr::from_ptr((*data_type_info).encoding).to_string_lossy().into_owned();
+            let type_name = CStr::from_ptr((*data_type_info).name).to_string_lossy().into_owned();
+
+            let metadata = Received {
+                msg: decoded,
+                topic_name,
+                encoding,
+                type_name,
+                timestamp: (*data).send_timestamp,
+                clock: (*data).send_clock,
+            };
+
+            cb_wrapper.call(metadata);
+        }
     }
 }

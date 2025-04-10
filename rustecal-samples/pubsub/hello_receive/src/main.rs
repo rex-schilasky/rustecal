@@ -10,10 +10,19 @@ fn main() {
         .expect("Failed to create subscriber");
 
     subscriber.set_callback(|msg: Received<StringMessage>| {
-        println!("Received: {}", msg.msg.0);
-        println!("Time    : {}", msg.timestamp);
-        println!("Clock   : {}", msg.clock);
-        println!();
+        println!("------------------------------------------");
+        println!(" HEAD ");
+        println!("------------------------------------------");
+        println!("topic name   : {}", msg.topic_name);
+        println!("encoding     : {}", msg.encoding);
+        println!("type name    : {}", msg.type_name);
+        println!("topic time   : {}", msg.timestamp);
+        println!("topic clock  : {}", msg.clock);
+        println!("------------------------------------------");
+        println!(" CONTENT ");
+        println!("------------------------------------------");
+        println!("message      : {}", msg.msg.0);
+        println!("------------------------------------------\n");
     });
 
     println!("Waiting for messages on topic 'hello'...");

@@ -29,7 +29,9 @@ fn main() {
         println!("------------------------------------------");
         println!(" HEAD ");
         println!("------------------------------------------");
-        // println!("topic name   : {}", msg.topic_name);
+        println!("topic name   : {}", msg.topic_name);
+        println!("encoding     : {}", msg.encoding);
+        println!("type name    : {}", msg.type_name);
         println!("topic time   : {}", msg.timestamp);
         println!("topic clock  : {}", msg.clock);
         println!("------------------------------------------");

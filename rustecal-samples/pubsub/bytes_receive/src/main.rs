@@ -17,16 +17,23 @@ fn main() {
 
         let content = buffer[0] as u8;
 
-        println!("----------------------------------------------");
-        println!(" Received binary buffer {}", content);
-        println!("----------------------------------------------");
-        println!(" Size         : {}", buffer.len());
-        println!(" Time         : {}", msg.timestamp);
-        println!(" Clock        : {}", msg.clock);
-        println!();
+        println!("------------------------------------------");
+        println!(" HEAD ");
+        println!("------------------------------------------");
+        println!("topic name   : {}", msg.topic_name);
+        println!("encoding     : {}", msg.encoding);
+        println!("type name    : {}", msg.type_name);
+        println!("topic time   : {}", msg.timestamp);
+        println!("topic clock  : {}", msg.clock);
+        println!("------------------------------------------");
+        println!(" CONTENT ");
+        println!("------------------------------------------");
+        println!("binary value : {}", content);
+        println!("buffer size  : {}", buffer.len());
+        println!("------------------------------------------\n");
     });
 
-    println!("Listening for binary blobs on topic 'blob'...");
+    println!("Waiting for binary blobs on topic 'blob'...");
 
     while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(100));
