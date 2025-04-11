@@ -5,23 +5,41 @@ use std::ffi::{c_void, CStr};
 use std::marker::PhantomData;
 use std::slice;
 
-/// Trait that must be implemented for any type used with `TypedSubscriber`
+/// Trait that must be implemented for any type used with [`TypedSubscriber`].
+///
+/// Provides metadata and deserialization logic for a specific message type.
 pub trait SubscriberMessage: Sized {
+    /// Returns the metadata that describes this message type (encoding, name, optional descriptor).
     fn datatype() -> DataTypeInfo;
+
+    /// Constructs an instance of the message type from a byte slice.
     fn from_bytes(bytes: &[u8]) -> Option<Self>;
 }
 
-/// Wrapper for received message including metadata
+/// Represents a received message with associated metadata.
+///
+/// This includes the deserialized message and eCAL metadata such as timestamp and topic information.
 pub struct Received<T> {
+    /// The decoded message of type `T`.
     pub msg: T,
+
+    /// The name of the topic this message was received on.
     pub topic_name: String,
+
+    /// The declared encoding format (e.g. "proto", "string", "raw").
     pub encoding: String,
+
+    /// The declared type name of the message (may match `std::any::type_name::<T>()`).
     pub type_name: String,
+
+    /// The send timestamp provided by the publisher (microseconds since epoch).
     pub timestamp: i64,
+
+    /// The logical clock value at which the message was sent.
     pub clock: i64,
 }
 
-/// Internal callback wrapper for type erasure
+/// Internal trampoline wrapper that stores a type-erased callback for dispatching typed messages.
 struct CallbackWrapper<T: SubscriberMessage> {
     callback: Box<dyn Fn(Received<T>) + Send + Sync>,
 }
@@ -41,7 +59,9 @@ impl<T: SubscriberMessage> CallbackWrapper<T> {
     }
 }
 
-/// A type-safe high-level eCAL subscriber
+/// A high-level, type-safe subscriber for a specific message type `T`.
+///
+/// Wraps the lower-level [`Subscriber`] to provide automatic deserialization and typed callbacks.
 pub struct TypedSubscriber<T: SubscriberMessage> {
     subscriber: Subscriber,
     user_data: *mut CallbackWrapper<T>,
@@ -49,13 +69,24 @@ pub struct TypedSubscriber<T: SubscriberMessage> {
 }
 
 impl<T: SubscriberMessage> TypedSubscriber<T> {
-    pub fn new(topic: &str) -> Result<Self, String> {
+    /// Creates a new typed subscriber for the specified topic.
+    ///
+    /// # Arguments
+    ///
+    /// * `topic_name` - The name of the topic to subscribe to.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(Self)` if the subscriber was created successfully, or `Err` with a description.
+    pub fn new(topic_name: &str) -> Result<Self, String> {
         let datatype = T::datatype();
 
+        // Set dummy callback for construction, real callback will be assigned later
         let boxed: Box<CallbackWrapper<T>> = Box::new(CallbackWrapper::new(|_| {}));
         let user_data = Box::into_raw(boxed);
 
-        let subscriber = Subscriber::new(topic, datatype, trampoline::<T>, user_data as *mut _)?;
+        // FIXED: remove `user_data` argument here
+        let subscriber = Subscriber::new(topic_name, datatype, trampoline::<T>)?;
 
         Ok(Self {
             subscriber,
@@ -64,11 +95,20 @@ impl<T: SubscriberMessage> TypedSubscriber<T> {
         })
     }
 
+
+    /// Registers a user callback that receives a deserialized message with metadata.
+    ///
+    /// This replaces any previously set callback and transfers ownership of the closure.
+    ///
+    /// # Arguments
+    ///
+    /// * `callback` - A closure accepting a [`Received<T>`] message.
     pub fn set_callback<F>(&mut self, callback: F)
     where
         F: Fn(Received<T>) + Send + Sync + 'static,
     {
         unsafe {
+            // Drop the old callback
             let _ = Box::from_raw(self.user_data);
         }
 
@@ -86,6 +126,7 @@ impl<T: SubscriberMessage> TypedSubscriber<T> {
 }
 
 impl<T: SubscriberMessage> Drop for TypedSubscriber<T> {
+    /// Cleans up and removes the callback, releasing any boxed closures.
     fn drop(&mut self) {
         unsafe {
             rustecal_sys::eCAL_Subscriber_RemoveReceiveCallback(self.subscriber.raw_handle());
@@ -94,7 +135,9 @@ impl<T: SubscriberMessage> Drop for TypedSubscriber<T> {
     }
 }
 
-/// eCAL callback trampoline to dispatch to typed closure
+/// Internal trampoline for dispatching incoming messages to the registered user closure.
+///
+/// Converts C FFI types into Rust-safe [`Received<T>`] values and passes them to the callback.
 extern "C" fn trampoline<T: SubscriberMessage>(
     topic_id: *const eCAL_STopicId,
     data_type_info: *const eCAL_SDataTypeInformation,

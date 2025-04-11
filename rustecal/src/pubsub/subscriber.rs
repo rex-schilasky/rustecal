@@ -22,7 +22,6 @@ impl Subscriber {
     /// * `topic_name` - The name of the topic to subscribe to.
     /// * `data_type` - Metadata describing the expected message format.
     /// * `callback` - A raw extern "C" callback function to invoke on reception.
-    /// * `_user_data` - Reserved for future use (currently ignored).
     ///
     /// # Returns
     ///
@@ -36,7 +35,6 @@ impl Subscriber {
             *const eCAL_SReceiveCallbackData,
             *mut c_void,
         ),
-        _user_data: *mut c_void, // Ignored
     ) -> Result<Self, String> {
         let c_topic = CString::new(topic_name).map_err(|_| "Invalid topic name")?;
         let c_encoding = CString::new(data_type.encoding).map_err(|_| "Invalid encoding")?;
