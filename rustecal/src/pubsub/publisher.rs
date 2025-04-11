@@ -69,7 +69,7 @@ impl Publisher {
     ///
     /// # Arguments
     ///
-    /// * `data` - Serialized byte buffer of the message.
+    /// * `data` - Message buffer.
     ///
     /// # Returns
     ///
@@ -89,7 +89,7 @@ impl Publisher {
     ///
     /// # Arguments
     ///
-    /// * `data` - Serialized message buffer.
+    /// * `data` - Message buffer.
     /// * `timestamp` - Time in microseconds (use -1 for eCAL system time).
     ///
     /// # Returns

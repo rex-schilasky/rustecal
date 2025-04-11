@@ -1,5 +1,5 @@
 use crate::pubsub::publisher::Publisher;
-use crate::pubsub::types::DataTypeInfo;
+use crate::pubsub::types::{DataTypeInfo, TopicId};
 use std::marker::PhantomData;
 
 /// Trait for types that can be published via `TypedPublisher`.
@@ -57,5 +57,36 @@ impl<T: PublisherMessage> TypedPublisher<T> {
     pub fn send(&self, message: &T) {
         let bytes = message.to_bytes();
         self.publisher.send(&bytes);
+    }
+
+    /// Publishes a message with a custom send timestamp.
+    ///
+    /// # Arguments
+    ///
+    /// * `message` - The message to publish.
+    /// * `timestamp` - The custom send time in microseconds.
+    pub fn send_with_timestamp(&self, message: &T, timestamp: i64) {
+        let bytes = message.to_bytes();
+        self.publisher.send_with_timestamp(&bytes, timestamp);
+    }
+
+    /// Returns the number of connected subscribers.
+    pub fn get_subscriber_count(&self) -> usize {
+        self.publisher.get_subscriber_count()
+    }
+
+    /// Returns the topic name as a string.
+    pub fn get_topic_name(&self) -> Option<String> {
+        self.publisher.get_topic_name()
+    }
+
+    /// Returns the topic ID used by eCAL.
+    pub fn get_topic_id(&self) -> Option<TopicId> {
+        self.publisher.get_topic_id()
+    }
+
+    /// Returns metadata describing the message type (encoding, type name, etc.).
+    pub fn get_data_type_information(&self) -> Option<DataTypeInfo> {
+        self.publisher.get_data_type_information()
     }
 }

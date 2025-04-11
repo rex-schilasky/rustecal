@@ -1,5 +1,5 @@
 use crate::pubsub::subscriber::Subscriber;
-use crate::pubsub::types::DataTypeInfo;
+use crate::pubsub::types::{DataTypeInfo, TopicId};
 use rustecal_sys::{eCAL_SDataTypeInformation, eCAL_SReceiveCallbackData, eCAL_STopicId};
 use std::ffi::{c_void, CStr};
 use std::marker::PhantomData;
@@ -85,7 +85,6 @@ impl<T: SubscriberMessage> TypedSubscriber<T> {
         let boxed: Box<CallbackWrapper<T>> = Box::new(CallbackWrapper::new(|_| {}));
         let user_data = Box::into_raw(boxed);
 
-        // FIXED: remove `user_data` argument here
         let subscriber = Subscriber::new(topic_name, datatype, trampoline::<T>)?;
 
         Ok(Self {
@@ -94,7 +93,6 @@ impl<T: SubscriberMessage> TypedSubscriber<T> {
             _phantom: PhantomData,
         })
     }
-
 
     /// Registers a user callback that receives a deserialized message with metadata.
     ///
@@ -122,6 +120,26 @@ impl<T: SubscriberMessage> TypedSubscriber<T> {
                 self.user_data as *mut _,
             );
         }
+    }
+
+    /// Returns the number of connected publishers for this topic.
+    pub fn get_publisher_count(&self) -> usize {
+        self.subscriber.get_publisher_count()
+    }
+
+    /// Returns the name of the subscribed topic.
+    pub fn get_topic_name(&self) -> Option<String> {
+        self.subscriber.get_topic_name()
+    }
+
+    /// Returns the internal eCAL topic ID.
+    pub fn get_topic_id(&self) -> Option<TopicId> {
+        self.subscriber.get_topic_id()
+    }
+
+    /// Returns the declared data type metadata (encoding, type name, descriptor).
+    pub fn get_data_type_information(&self) -> Option<DataTypeInfo> {
+        self.subscriber.get_data_type_information()
     }
 }
 
