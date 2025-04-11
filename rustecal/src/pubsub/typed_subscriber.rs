@@ -62,6 +62,15 @@ impl<T: SubscriberMessage> CallbackWrapper<T> {
 /// A high-level, type-safe subscriber for a specific message type `T`.
 ///
 /// Wraps the lower-level [`Subscriber`] to provide automatic deserialization and typed callbacks.
+///
+/// # Example
+/// ```no_run
+/// use rustecal::TypedSubscriber;
+/// use rustecal_types_string::StringMessage;
+///
+/// let mut sub = TypedSubscriber::<StringMessage>::new("hello").unwrap();
+/// sub.set_callback(|msg| println!("Received: {}", msg.msg.0));
+/// ```
 pub struct TypedSubscriber<T: SubscriberMessage> {
     subscriber: Subscriber,
     user_data: *mut CallbackWrapper<T>,
@@ -122,22 +131,34 @@ impl<T: SubscriberMessage> TypedSubscriber<T> {
         }
     }
 
-    /// Returns the number of connected publishers for this topic.
+    /// Returns the number of currently connected publishers to this topic.
+    ///
+    /// This can be used for diagnostics or to implement optional behavior based
+    /// on whether any publisher is present.
     pub fn get_publisher_count(&self) -> usize {
         self.subscriber.get_publisher_count()
     }
 
     /// Returns the name of the subscribed topic.
+    ///
+    /// This is the same topic name passed to [`TypedSubscriber::new`].
     pub fn get_topic_name(&self) -> Option<String> {
         self.subscriber.get_topic_name()
     }
 
-    /// Returns the internal eCAL topic ID.
+    /// Returns the unique topic ID used internally by eCAL.
+    ///
+    /// This can be useful for introspection or advanced matching logic across nodes.
     pub fn get_topic_id(&self) -> Option<TopicId> {
         self.subscriber.get_topic_id()
     }
 
-    /// Returns the declared data type metadata (encoding, type name, descriptor).
+    /// Returns the declared data type metadata for this topic.
+    ///
+    /// Includes:
+    /// - `encoding` (e.g. `"proto"`, `"string"`, `"raw"`)
+    /// - `type_name` (e.g. Protobuf type or Rust type)
+    /// - `descriptor` (optional descriptor bytes, e.g. protobuf schema)
     pub fn get_data_type_information(&self) -> Option<DataTypeInfo> {
         self.subscriber.get_data_type_information()
     }
