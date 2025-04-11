@@ -3,6 +3,11 @@ use rustecal_sys::*;
 use std::ffi::{CString, CStr};
 use std::ptr;
 
+/// A safe wrapper around the eCAL C publisher API.
+///
+/// This struct handles publishing serialized messages via eCAL, using
+/// strongly typed metadata (`DataTypeInfo`) and managing the lifecycle of
+/// the underlying C handle.
 pub struct Publisher {
     handle: *mut eCAL_Publisher,
     _encoding: CString,
@@ -11,22 +16,32 @@ pub struct Publisher {
 }
 
 impl Publisher {
-    pub fn new(topic_name: &str, info: DataTypeInfo) -> Result<Self, String> {
+    /// Creates a new publisher for the given topic and message type.
+    ///
+    /// # Arguments
+    ///
+    /// * `topic_name` - The name of the topic to publish to.
+    /// * `data_type` - Metadata describing the message type (encoding, type name, optional descriptor).
+    ///
+    /// # Returns
+    ///
+    /// A new `Publisher` instance if successful, or an error string if creation fails.
+    pub fn new(topic_name: &str, data_type: DataTypeInfo) -> Result<Self, String> {
         let c_topic = CString::new(topic_name).map_err(|_| "Invalid topic name")?;
-        let c_encoding = CString::new(info.encoding).map_err(|_| "Invalid encoding string")?;
-        let c_type_name = CString::new(info.type_name).map_err(|_| "Invalid type name")?;
+        let c_encoding = CString::new(data_type.encoding).map_err(|_| "Invalid encoding string")?;
+        let c_type_name = CString::new(data_type.type_name).map_err(|_| "Invalid type name")?;
 
-        let descriptor_ptr = if info.descriptor.is_empty() {
+        let descriptor_ptr = if data_type.descriptor.is_empty() {
             ptr::null()
         } else {
-            info.descriptor.as_ptr() as *const std::ffi::c_void
+            data_type.descriptor.as_ptr() as *const std::ffi::c_void
         };
 
         let data_type_info = eCAL_SDataTypeInformation {
             encoding: c_encoding.as_ptr(),
             name: c_type_name.as_ptr(),
             descriptor: descriptor_ptr,
-            descriptor_length: info.descriptor.len(),
+            descriptor_length: data_type.descriptor.len(),
         };
 
         let handle = unsafe {
@@ -45,11 +60,20 @@ impl Publisher {
                 handle,
                 _encoding: c_encoding,
                 _type_name: c_type_name,
-                _descriptor: info.descriptor,
+                _descriptor: data_type.descriptor,
             })
         }
     }
 
+    /// Sends a message to all connected subscribers.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - Serialized byte buffer of the message.
+    ///
+    /// # Returns
+    ///
+    /// An integer status (0 = failure, 1 = success).
     pub fn send(&self, data: &[u8]) -> i32 {
         unsafe {
             eCAL_Publisher_Send(
@@ -61,6 +85,16 @@ impl Publisher {
         }
     }
 
+    /// Sends a message to all subscribers with an explicit send timestamp.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - Serialized message buffer.
+    /// * `timestamp` - Time in microseconds (use -1 for eCAL system time).
+    ///
+    /// # Returns
+    ///
+    /// An integer status (0 = failure, 1 = success).
     pub fn send_with_timestamp(&self, data: &[u8], timestamp: i64) -> i32 {
         unsafe {
             eCAL_Publisher_Send(
@@ -72,10 +106,16 @@ impl Publisher {
         }
     }
 
+    /// Returns the number of currently connected subscribers.
     pub fn get_subscriber_count(&self) -> usize {
         unsafe { eCAL_Publisher_GetSubscriberCount(self.handle) }
     }
 
+    /// Retrieves the topic name this publisher is connected to.
+    ///
+    /// # Returns
+    ///
+    /// The topic name as a `String`, or `None` if retrieval fails.
     pub fn get_topic_name(&self) -> Option<String> {
         unsafe {
             let raw = eCAL_Publisher_GetTopicName(self.handle);
@@ -87,6 +127,11 @@ impl Publisher {
         }
     }
 
+    /// Retrieves the topic ID used internally by eCAL.
+    ///
+    /// # Returns
+    ///
+    /// A `TopicId` struct or `None` if unavailable.
     pub fn get_topic_id(&self) -> Option<TopicId> {
         unsafe {
             let raw = eCAL_Publisher_GetTopicId(self.handle);
@@ -98,6 +143,10 @@ impl Publisher {
         }
     }
 
+    /// Returns the declared data type metadata for this publisher.
+    ///
+    /// This includes the declared encoding, type name, and optionally the
+    /// descriptor (e.g. Protobuf schema bytes).
     pub fn get_data_type_information(&self) -> Option<DataTypeInfo> {
         unsafe {
             let raw = eCAL_Publisher_GetDataTypeInformation(self.handle);
@@ -135,6 +184,7 @@ impl Publisher {
 }
 
 impl Drop for Publisher {
+    /// Releases the underlying eCAL publisher when dropped.
     fn drop(&mut self) {
         unsafe {
             eCAL_Publisher_Delete(self.handle);

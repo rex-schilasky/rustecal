@@ -3,6 +3,10 @@ use crate::pubsub::types::{DataTypeInfo, TopicId};
 use std::ffi::{CString, CStr, c_void};
 use std::ptr;
 
+/// A safe wrapper around the eCAL C subscriber API.
+///
+/// This struct allows subscribing to a named topic using a user-provided
+/// callback and receiving deserialized messages of a specific data type.
 pub struct Subscriber {
     handle: *mut eCAL_Subscriber,
     _encoding: CString,
@@ -11,6 +15,18 @@ pub struct Subscriber {
 }
 
 impl Subscriber {
+    /// Creates a new subscriber and assigns a receive callback.
+    ///
+    /// # Arguments
+    ///
+    /// * `topic_name` - The name of the topic to subscribe to.
+    /// * `data_type` - Metadata describing the expected message format.
+    /// * `callback` - A raw extern "C" callback function to invoke on reception.
+    /// * `_user_data` - Reserved for future use (currently ignored).
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(Subscriber)` on success or `Err(String)` on failure.
     pub fn new(
         topic_name: &str,
         data_type: DataTypeInfo,
@@ -72,14 +88,21 @@ impl Subscriber {
         })
     }
 
+    /// Returns the raw C pointer to the eCAL subscriber handle.
     pub fn raw_handle(&self) -> *mut eCAL_Subscriber {
         self.handle
     }
 
+    /// Returns the number of currently connected publishers.
     pub fn get_publisher_count(&self) -> usize {
         unsafe { eCAL_Subscriber_GetPublisherCount(self.handle) }
     }
 
+    /// Retrieves the topic name this subscriber is connected to.
+    ///
+    /// # Returns
+    ///
+    /// The topic name as a `String`, or `None` if retrieval fails.
     pub fn get_topic_name(&self) -> Option<String> {
         unsafe {
             let raw = eCAL_Subscriber_GetTopicName(self.handle);
@@ -91,6 +114,11 @@ impl Subscriber {
         }
     }
 
+    /// Retrieves the topic ID used internally by eCAL.
+    ///
+    /// # Returns
+    ///
+    /// A `TopicId` struct or `None` if unavailable.
     pub fn get_topic_id(&self) -> Option<TopicId> {
         unsafe {
             let raw = eCAL_Subscriber_GetTopicId(self.handle);
@@ -102,6 +130,10 @@ impl Subscriber {
         }
     }
 
+    /// Returns the declared data type metadata for this subscriber.
+    ///
+    /// This includes the declared encoding, type name, and optionally the
+    /// descriptor (e.g. Protobuf schema bytes).
     pub fn get_data_type_information(&self) -> Option<DataTypeInfo> {
         unsafe {
             let raw = eCAL_Subscriber_GetDataTypeInformation(self.handle);
@@ -139,6 +171,7 @@ impl Subscriber {
 }
 
 impl Drop for Subscriber {
+    /// Removes the receive callback and deletes the underlying eCAL handle.
     fn drop(&mut self) {
         unsafe {
             eCAL_Subscriber_RemoveReceiveCallback(self.handle);
