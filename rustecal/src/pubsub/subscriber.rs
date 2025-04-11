@@ -3,10 +3,11 @@ use crate::pubsub::types::{DataTypeInfo, TopicId};
 use std::ffi::{CString, CStr, c_void};
 use std::ptr;
 
-/// A safe wrapper around the eCAL C subscriber API.
+/// A safe and ergonomic wrapper around the eCAL C subscriber API.
 ///
-/// This struct allows subscribing to a named topic using a user-provided
-/// callback and receiving deserialized messages of a specific data type.
+/// This struct provides a high-level interface for subscribing to messages from
+/// a topic using eCAL. It manages the lifecycle of the underlying eCAL subscriber handle
+/// and allows registration of low-level C-compatible receive callbacks.
 pub struct Subscriber {
     handle: *mut eCAL_Subscriber,
     _encoding: CString,
@@ -20,12 +21,12 @@ impl Subscriber {
     /// # Arguments
     ///
     /// * `topic_name` - The name of the topic to subscribe to.
-    /// * `data_type` - Metadata describing the expected message format.
-    /// * `callback` - A raw extern "C" callback function to invoke on reception.
+    /// * `data_type` - Metadata describing the expected message format (encoding, type name, descriptor).
+    /// * `callback` - A raw extern "C" callback function invoked on message reception.
     ///
     /// # Returns
     ///
-    /// Returns `Ok(Subscriber)` on success or `Err(String)` on failure.
+    /// `Ok(Self)` on success or `Err(String)` on failure.
     pub fn new(
         topic_name: &str,
         data_type: DataTypeInfo,
@@ -70,7 +71,7 @@ impl Subscriber {
             eCAL_Subscriber_SetReceiveCallback(
                 handle,
                 Some(callback),
-                ptr::null_mut(), // Always set to null
+                ptr::null_mut(),
             )
         };
 
@@ -86,7 +87,9 @@ impl Subscriber {
         })
     }
 
-    /// Returns the raw C pointer to the eCAL subscriber handle.
+    /// Returns the raw pointer to the underlying eCAL subscriber.
+    ///
+    /// This is primarily useful for advanced FFI use cases or low-level access.
     pub fn raw_handle(&self) -> *mut eCAL_Subscriber {
         self.handle
     }
@@ -96,11 +99,11 @@ impl Subscriber {
         unsafe { eCAL_Subscriber_GetPublisherCount(self.handle) }
     }
 
-    /// Retrieves the topic name this subscriber is connected to.
+    /// Retrieves the name of the topic this subscriber is connected to.
     ///
     /// # Returns
     ///
-    /// The topic name as a `String`, or `None` if retrieval fails.
+    /// The topic name as a `String`, or `None` if unavailable.
     pub fn get_topic_name(&self) -> Option<String> {
         unsafe {
             let raw = eCAL_Subscriber_GetTopicName(self.handle);
@@ -112,11 +115,11 @@ impl Subscriber {
         }
     }
 
-    /// Retrieves the topic ID used internally by eCAL.
+    /// Retrieves the internal eCAL topic ID for this subscriber.
     ///
     /// # Returns
     ///
-    /// A `TopicId` struct or `None` if unavailable.
+    /// A [`TopicId`] struct, or `None` if the information is unavailable.
     pub fn get_topic_id(&self) -> Option<TopicId> {
         unsafe {
             let raw = eCAL_Subscriber_GetTopicId(self.handle);
@@ -128,10 +131,12 @@ impl Subscriber {
         }
     }
 
-    /// Returns the declared data type metadata for this subscriber.
+    /// Retrieves the declared data type information for this subscriber.
     ///
-    /// This includes the declared encoding, type name, and optionally the
-    /// descriptor (e.g. Protobuf schema bytes).
+    /// # Returns
+    ///
+    /// A [`DataTypeInfo`] object containing encoding, type name, and descriptor,
+    /// or `None` if the metadata is unavailable.
     pub fn get_data_type_information(&self) -> Option<DataTypeInfo> {
         unsafe {
             let raw = eCAL_Subscriber_GetDataTypeInformation(self.handle);
@@ -169,7 +174,7 @@ impl Subscriber {
 }
 
 impl Drop for Subscriber {
-    /// Removes the receive callback and deletes the underlying eCAL handle.
+    /// Cleans up and removes the callback, releasing the underlying eCAL subscriber handle.
     fn drop(&mut self) {
         unsafe {
             eCAL_Subscriber_RemoveReceiveCallback(self.handle);

@@ -5,36 +5,26 @@ use std::marker::PhantomData;
 /// Trait for types that can be published via [`TypedPublisher`].
 ///
 /// Implement this trait for any message type `T` that should be serialized and sent
-/// using the typed publisher API.
+/// through eCAL's typed publisher API.
 ///
 /// # Required Methods
 ///
-/// - [`datatype`]: Returns metadata including encoding, type name, and optional descriptor.
-/// - [`to_bytes`]: Serializes the message to a binary format.
-///
-/// This trait must be implemented by any message type `T` that should be
-/// transmitted via the typed publisher API.
-///
-/// # Required Methods
-///
-/// - [`datatype`]: Returns metadata describing the encoding, type name,
-///   and descriptor (e.g., Protobuf schema).
-/// - [`to_bytes`]: Serializes the message instance into a binary buffer.
+/// - [`datatype()`]: Returns metadata describing the encoding, type name,
+///   and optional descriptor (e.g., Protobuf schema).
+/// - [`to_bytes()`]: Serializes the message into a binary buffer.
 pub trait PublisherMessage {
-    /// Returns topic metadata for this type.
+    /// Returns topic metadata for this message type.
     fn datatype() -> DataTypeInfo;
 
     /// Serializes the message into a byte buffer for transmission.
     fn to_bytes(&self) -> Vec<u8>;
 }
 
-/// Type-safe, high-level wrapper around an eCAL publisher.
+/// Type-safe, high-level wrapper around an eCAL publisher for messages of type `T`.
 ///
-/// This struct is generic over a type `T` implementing [`PublisherMessage`],
-/// and ensures safe, typed interaction with the eCAL publish-subscribe system.
-///
-/// Internally, it wraps a raw [`Publisher`] instance and provides additional
-/// features like automatic serialization and type-safe publishing.
+/// This struct wraps an untyped [`Publisher`] and ensures that only compatible messages
+/// are published. It automatically serializes values of type `T` using the
+/// [`PublisherMessage`] trait implementation.
 ///
 /// # Example
 ///
@@ -51,15 +41,15 @@ pub struct TypedPublisher<T: PublisherMessage> {
 }
 
 impl<T: PublisherMessage> TypedPublisher<T> {
-    /// Creates a new typed publisher for the given topic name.
+    /// Creates a new typed publisher for the specified topic.
     ///
     /// # Arguments
     ///
-    /// * `topic_name` - The topic name used for publishing messages.
+    /// * `topic_name` - The topic name to publish to.
     ///
     /// # Errors
     ///
-    /// Returns a `String` if the underlying eCAL publisher cannot be created.
+    /// Returns a `String` if the underlying eCAL publisher could not be created.
     pub fn new(topic_name: &str) -> Result<Self, String> {
         let datatype = T::datatype();
         let publisher = Publisher::new(topic_name, datatype)?;
@@ -70,19 +60,19 @@ impl<T: PublisherMessage> TypedPublisher<T> {
         })
     }
 
-    /// Sends a typed message to all connected subscribers.
+    /// Sends a message of type `T` to all connected subscribers.
     ///
-    /// The message is serialized using the [`PublisherMessage::to_bytes`] method.
+    /// The message is serialized using [`PublisherMessage::to_bytes()`].
     ///
     /// # Arguments
     ///
-    /// * `message` - The message of type `T` to send.
+    /// * `message` - The typed message to send.
     pub fn send(&self, message: &T) {
         let bytes = message.to_bytes();
         self.publisher.send(&bytes);
     }
 
-    /// Sends a message with a custom timestamp (in microseconds).
+    /// Sends a message of type `T` with a custom timestamp (in microseconds).
     ///
     /// # Arguments
     ///
@@ -103,12 +93,12 @@ impl<T: PublisherMessage> TypedPublisher<T> {
         self.publisher.get_topic_name()
     }
 
-    /// Returns the topic ID (as seen by the eCAL system).
+    /// Returns the topic ID as seen by the eCAL system.
     pub fn get_topic_id(&self) -> Option<TopicId> {
         self.publisher.get_topic_id()
     }
 
-    /// Returns the declared message metadata for this publisher.
+    /// Returns the declared message type metadata.
     pub fn get_data_type_information(&self) -> Option<DataTypeInfo> {
         self.publisher.get_data_type_information()
     }

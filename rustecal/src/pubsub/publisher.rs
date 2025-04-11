@@ -1,13 +1,13 @@
 use crate::pubsub::types::{DataTypeInfo, TopicId};
 use rustecal_sys::*;
-use std::ffi::{CString, CStr};
+use std::ffi::{CStr, CString};
 use std::ptr;
 
-/// A safe wrapper around the eCAL C publisher API.
+/// A safe and ergonomic wrapper around the eCAL C publisher API.
 ///
-/// This struct handles publishing serialized messages via eCAL, using
-/// strongly typed metadata (`DataTypeInfo`) and managing the lifecycle of
-/// the underlying C handle.
+/// This struct provides a high-level interface for sending serialized messages to
+/// a topic using eCAL. It manages the lifecycle of the underlying eCAL publisher handle
+/// and exposes convenient methods to access metadata and send data.
 pub struct Publisher {
     handle: *mut eCAL_Publisher,
     _encoding: CString,
@@ -16,16 +16,16 @@ pub struct Publisher {
 }
 
 impl Publisher {
-    /// Creates a new publisher for the given topic and message type.
+    /// Creates a new publisher for the given topic with type metadata.
     ///
     /// # Arguments
     ///
-    /// * `topic_name` - The name of the topic to publish to.
-    /// * `data_type` - Metadata describing the message type (encoding, type name, optional descriptor).
+    /// * `topic_name` - The topic to publish messages on.
+    /// * `data_type` - The encoding, type name, and optional descriptor for the topic.
     ///
     /// # Returns
     ///
-    /// A new `Publisher` instance if successful, or an error string if creation fails.
+    /// Returns `Ok(Publisher)` if creation succeeds, or `Err` with a message if it fails.
     pub fn new(topic_name: &str, data_type: DataTypeInfo) -> Result<Self, String> {
         let c_topic = CString::new(topic_name).map_err(|_| "Invalid topic name")?;
         let c_encoding = CString::new(data_type.encoding).map_err(|_| "Invalid encoding string")?;
@@ -45,12 +45,7 @@ impl Publisher {
         };
 
         let handle = unsafe {
-            eCAL_Publisher_New(
-                c_topic.as_ptr(),
-                &data_type_info,
-                None,
-                ptr::null(),
-            )
+            eCAL_Publisher_New(c_topic.as_ptr(), &data_type_info, None, ptr::null())
         };
 
         if handle.is_null() {
@@ -65,15 +60,15 @@ impl Publisher {
         }
     }
 
-    /// Sends a message to all connected subscribers.
+    /// Sends a serialized message to all connected subscribers.
     ///
     /// # Arguments
     ///
-    /// * `data` - Message buffer.
+    /// * `data` - A byte buffer containing the serialized message payload.
     ///
     /// # Returns
     ///
-    /// An integer status (0 = failure, 1 = success).
+    /// `1` on success, `0` on failure.
     pub fn send(&self, data: &[u8]) -> i32 {
         unsafe {
             eCAL_Publisher_Send(
@@ -85,16 +80,16 @@ impl Publisher {
         }
     }
 
-    /// Sends a message to all subscribers with an explicit send timestamp.
+    /// Sends a serialized message with a custom timestamp.
     ///
     /// # Arguments
     ///
-    /// * `data` - Message buffer.
-    /// * `timestamp` - Time in microseconds (use -1 for eCAL system time).
+    /// * `data` - A byte buffer containing the message.
+    /// * `timestamp` - Timestamp in microseconds (use `-1` to let eCAL determine the time).
     ///
     /// # Returns
     ///
-    /// An integer status (0 = failure, 1 = success).
+    /// `1` on success, `0` on failure.
     pub fn send_with_timestamp(&self, data: &[u8], timestamp: i64) -> i32 {
         unsafe {
             eCAL_Publisher_Send(
@@ -111,11 +106,11 @@ impl Publisher {
         unsafe { eCAL_Publisher_GetSubscriberCount(self.handle) }
     }
 
-    /// Retrieves the topic name this publisher is connected to.
+    /// Retrieves the name of the topic being published.
     ///
     /// # Returns
     ///
-    /// The topic name as a `String`, or `None` if retrieval fails.
+    /// The topic name as a `String`, or `None` if unavailable.
     pub fn get_topic_name(&self) -> Option<String> {
         unsafe {
             let raw = eCAL_Publisher_GetTopicName(self.handle);
@@ -127,11 +122,11 @@ impl Publisher {
         }
     }
 
-    /// Retrieves the topic ID used internally by eCAL.
+    /// Retrieves the internal eCAL topic ID for this publisher.
     ///
     /// # Returns
     ///
-    /// A `TopicId` struct or `None` if unavailable.
+    /// A [`TopicId`] struct, or `None` if the information is unavailable.
     pub fn get_topic_id(&self) -> Option<TopicId> {
         unsafe {
             let raw = eCAL_Publisher_GetTopicId(self.handle);
@@ -143,10 +138,12 @@ impl Publisher {
         }
     }
 
-    /// Returns the declared data type metadata for this publisher.
+    /// Retrieves the declared data type information for the publisher.
     ///
-    /// This includes the declared encoding, type name, and optionally the
-    /// descriptor (e.g. Protobuf schema bytes).
+    /// # Returns
+    ///
+    /// A [`DataTypeInfo`] object containing encoding, type name, and descriptor,
+    /// or `None` if the metadata is unavailable.
     pub fn get_data_type_information(&self) -> Option<DataTypeInfo> {
         unsafe {
             let raw = eCAL_Publisher_GetDataTypeInformation(self.handle);
@@ -184,7 +181,7 @@ impl Publisher {
 }
 
 impl Drop for Publisher {
-    /// Releases the underlying eCAL publisher when dropped.
+    /// Cleans up the underlying eCAL publisher resource.
     fn drop(&mut self) {
         unsafe {
             eCAL_Publisher_Delete(self.handle);
