@@ -1,6 +1,0 @@
-[book]
-title = "rustecal Documentation"
-authors = ["Rex Schilasky"]
-language = "en"
-multilingual = false
-src = "src"
