@@ -1,0 +1,9 @@
+[book]
+title = "rustecal Documentation"
+authors = ["Rex Schilasky"]
+language = "en"
+
+[build]
+create-missing = true
+
+[preprocessor.linkcheck]
