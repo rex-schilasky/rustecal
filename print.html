@@ -319,7 +319,7 @@ fn main() {
 <p>Welcome to the <code>rustecal</code> API documentation. This section provides an overview of the main types and traits used to interact with the eCAL communication system through safe and idiomatic Rust APIs.</p>
 <h2 id="modules-overview"><a class="header" href="#modules-overview">Modules Overview</a></h2>
 <ul>
-<li><a href="api/../api/ecal.html"><code>Ecal</code></a> — Lifecycle manager for eCAL initialization and finalization.</li>
+<li><a href="api/./ecal.html"><code>Ecal</code></a> — Lifecycle manager for eCAL initialization and finalization.</li>
 <li><a href="api/./publisher.html"><code>Publisher&lt;T&gt;</code></a> — Generic typed publisher used to send messages on a topic.</li>
 <li><a href="api/./subscriber.html"><code>Subscriber&lt;T&gt;</code></a> — Generic typed subscriber used to receive messages.</li>
 <li><a href="api/./message_types.html"><code>MessageType</code></a> — Trait for enabling custom serialization of types.</li>
@@ -347,6 +347,56 @@ pub.send("Hello from Rust!")?;
 <li><a href="api/./subscriber.html">Typed Subscriber</a></li>
 <li><a href="api/./message_types.html">Supported Message Types</a></li>
 </ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="ecal-lifecycle"><a class="header" href="#ecal-lifecycle">Ecal Lifecycle</a></h1>
+<p>The <code>Ecal</code> struct manages initialization and finalization of the eCAL system.</p>
+<h2 id="example"><a class="header" href="#example">Example</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustecal::Ecal;
+
+let ecal = Ecal::initialize("my_rust_app")?;
+// use publishers or subscribers
+drop(ecal); // finalizes on drop
+<span class="boring">}</span></code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="typed-publisher"><a class="header" href="#typed-publisher">Typed Publisher</a></h1>
+<p>The <code>Publisher&lt;T&gt;</code> allows you to publish messages of type <code>T</code> on a topic.</p>
+<h2 id="example-1"><a class="header" href="#example-1">Example</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustecal::pubsub::Publisher;
+use rustecal::types::StringMessage;
+
+let pub = Publisher::&lt;StringMessage&gt;::builder("my_topic").create()?;
+pub.send("Rust rocks!")?;
+<span class="boring">}</span></code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="typed-subscriber"><a class="header" href="#typed-subscriber">Typed Subscriber</a></h1>
+<p>The <code>Subscriber&lt;T&gt;</code> enables you to subscribe to messages of type <code>T</code> on a topic.</p>
+<h2 id="example-2"><a class="header" href="#example-2">Example</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustecal::pubsub::Subscriber;
+use rustecal::types::StringMessage;
+
+let sub = Subscriber::&lt;StringMessage&gt;::builder("my_topic").create()?;
+sub.set_callback(|msg| {
+    println!("Received: {}", msg.data());
+});
+<span class="boring">}</span></code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="supported-message-types-1"><a class="header" href="#supported-message-types-1">Supported Message Types</a></h1>
+<p><code>rustecal</code> supports message types through wrapper structs:</p>
+<h2 id="stringmessage"><a class="header" href="#stringmessage"><code>StringMessage</code></a></h2>
+<p>Used for UTF-8 string topics.</p>
+<h2 id="bytesmessage"><a class="header" href="#bytesmessage"><code>BytesMessage</code></a></h2>
+<p>Used for binary <code>Vec&lt;u8&gt;</code> payloads.</p>
+<h2 id="protobufmessaget"><a class="header" href="#protobufmessaget"><code>ProtobufMessage&lt;T&gt;</code></a></h2>
+<p>Supports publishing/receiving of Protobuf types that implement <code>Message</code> and <code>Default</code>.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustecal::types::ProtobufMessage;
+use my_proto::MyProto;
+
+let pub = Publisher::&lt;ProtobufMessage&lt;MyProto&gt;&gt;::builder("proto_topic").create()?;
+<span class="boring">}</span></code></pre></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="roadmap"><a class="header" href="#roadmap">Roadmap</a></h1>
 <ul>
 <li><input disabled="" type="checkbox" checked=""/>

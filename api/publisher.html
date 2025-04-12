@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>API Documentation - rustecal Documentation</title>
+        <title>Typed Publisher - rustecal Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -155,48 +155,27 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="api-documentation"><a class="header" href="#api-documentation">API Documentation</a></h1>
-<p>Welcome to the <code>rustecal</code> API documentation. This section provides an overview of the main types and traits used to interact with the eCAL communication system through safe and idiomatic Rust APIs.</p>
-<h2 id="modules-overview"><a class="header" href="#modules-overview">Modules Overview</a></h2>
-<ul>
-<li><a href="./ecal.html"><code>Ecal</code></a> — Lifecycle manager for eCAL initialization and finalization.</li>
-<li><a href="./publisher.html"><code>Publisher&lt;T&gt;</code></a> — Generic typed publisher used to send messages on a topic.</li>
-<li><a href="./subscriber.html"><code>Subscriber&lt;T&gt;</code></a> — Generic typed subscriber used to receive messages.</li>
-<li><a href="./message_types.html"><code>MessageType</code></a> — Trait for enabling custom serialization of types.</li>
-<li>Message Wrappers:
-<ul>
-<li><a href="./message_types.html#stringmessage"><code>StringMessage</code></a></li>
-<li><a href="./message_types.html#bytesmessage"><code>BytesMessage</code></a></li>
-<li><a href="./message_types.html#protobufmessaget"><code>ProtobufMessage&lt;T&gt;</code></a></li>
-</ul>
-</li>
-</ul>
-<p>Each module has its own documentation page with examples.</p>
-<h2 id="usage-highlights"><a class="header" href="#usage-highlights">Usage Highlights</a></h2>
+                        <h1 id="typed-publisher"><a class="header" href="#typed-publisher">Typed Publisher</a></h1>
+<p>The <code>Publisher&lt;T&gt;</code> allows you to publish messages of type <code>T</code> on a topic.</p>
+<h2 id="example"><a class="header" href="#example">Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>let _ecal = Ecal::initialize("my_app")?;
+</span>use rustecal::pubsub::Publisher;
+use rustecal::types::StringMessage;
+
 let pub = Publisher::&lt;StringMessage&gt;::builder("my_topic").create()?;
-pub.send("Hello from Rust!")?;
+pub.send("Rust rocks!")?;
 <span class="boring">}</span></code></pre></pre>
-<hr />
-<p>Explore the individual components in detail:</p>
-<ul>
-<li><a href="./ecal.html">Ecal Lifecycle</a></li>
-<li><a href="./publisher.html">Typed Publisher</a></li>
-<li><a href="./subscriber.html">Typed Subscriber</a></li>
-<li><a href="./message_types.html">Supported Message Types</a></li>
-</ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../examples/protobuf.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../api/ecal.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../api/ecal.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../api/subscriber.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -206,11 +185,11 @@ pub.send("Hello from Rust!")?;
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../examples/protobuf.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../api/ecal.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../api/ecal.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../api/subscriber.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
