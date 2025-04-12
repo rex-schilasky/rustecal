@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>API Documentation - rustecal Documentation</title>
+        <title>About - rustecal Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -155,62 +155,20 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="api-documentation"><a class="header" href="#api-documentation">API Documentation</a></h1>
-<p>This section provides reference documentation for the core API of <strong>rustecal</strong>.</p>
-<h2 id="ecal-core"><a class="header" href="#ecal-core">Ecal Core</a></h2>
-<ul>
-<li>
-<p><strong>Ecal::initialize(unit_name, components)</strong><br />
-Initializes the eCAL API with a given optional unit name and a bitflag of components (see <a href="./Components.html">EcalComponents</a>).</p>
-<ul>
-<li><strong>Arguments:</strong>
-<ul>
-<li><code>unit_name</code>: <code>Option&lt;&amp;str&gt;</code> – An optional string that identifies the eCAL unit.</li>
-<li><code>components</code>: <code>EcalComponents</code> – Bitflag flags to specify which components to initialize (default: publisher, subscriber, service, logging, and timesync).</li>
-</ul>
-</li>
-<li><strong>Returns:</strong> <code>Result&lt;(), i32&gt;</code><br />
-Returns <code>Ok(())</code> on success or an error code if initialization fails.</li>
-</ul>
-</li>
-<li>
-<p><strong>Ecal::finalize()</strong><br />
-Finalizes the eCAL API and releases all associated resources.</p>
-</li>
-<li>
-<p><strong>Ecal::ok() -&gt; bool</strong><br />
-Checks if eCAL is in a valid state.</p>
-</li>
-</ul>
-<h2 id="publisher-api"><a class="header" href="#publisher-api">Publisher API</a></h2>
-<p>See <a href="Publisher.html">Publisher Documentation</a> for details on how to create a publisher, send messages (with and without timestamps), and query topic metadata.</p>
-<h2 id="subscriber-api"><a class="header" href="#subscriber-api">Subscriber API</a></h2>
-<p>See <a href="Subscriber.html">Subscriber Documentation</a> for details on setting up a subscriber, receiving messages, and accessing topic metadata.</p>
-<h2 id="typed-pubsub"><a class="header" href="#typed-pubsub">Typed Pub/Sub</a></h2>
-<p>The typed publisher and subscriber API wrap the low-level functions and add type safety. Implement the traits:</p>
-<ul>
-<li><a href="#publishermessage"><code>PublisherMessage</code></a></li>
-<li><a href="#subscribermessage"><code>SubscriberMessage</code></a></li>
-</ul>
-<p>to support your message types. There are helper crates provided for common types:</p>
-<ul>
-<li><strong>rustecal-types-string</strong> – for UTF‑8 strings.</li>
-<li><strong>rustecal-types-bytes</strong> – for raw binary messages.</li>
-<li><strong>rustecal-types-protobuf</strong> – for Protobuf‑encoded messages.</li>
-</ul>
-<p><em>See the sample applications in the <code>rustecal-samples/pubsub</code> directory for practical examples.</em></p>
+                        <h1 id="about"><a class="header" href="#about">About</a></h1>
+<p>Created by Rex Schilasky<br />
+🚗 Automotive | 🧠 SDV | 🛠️ Rust | 🚀 IPC</p>
+<h2 id="license"><a class="header" href="#license">License</a></h2>
+<p>Licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a></p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="Introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="project_status.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="Changelog.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <i class="fa fa-angle-right"></i>
-                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -218,13 +176,10 @@ Checks if eCAL is in a valid state.</p>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="Introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="project_status.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="Changelog.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <i class="fa fa-angle-right"></i>
-                    </a>
             </nav>
 
         </div>
