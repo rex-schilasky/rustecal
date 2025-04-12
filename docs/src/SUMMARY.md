@@ -1,7 +1,7 @@
 # Summary
 
 - [Introduction](introduction.md)
-- [Getting Started](setup/prerequisites.md)
+- [Getting Started](setup/getting_started.md)
   - [Install eCAL](setup/ecal_installation.md)
 - [Project Structure](project_structure.md)
 - [Message Types](types/message_types.md)
