@@ -4,7 +4,7 @@ Welcome to the `rustecal` API documentation. This section provides an overview o
 
 ## Modules Overview
 
-- [`Ecal`](./ecal.md) — Lifecycle manager for eCAL initialization and finalization.
+- [`Ecal`](../api/ecal.md) — Lifecycle manager for eCAL initialization and finalization.
 - [`Publisher<T>`](./publisher.md) — Generic typed publisher used to send messages on a topic.
 - [`Subscriber<T>`](./subscriber.md) — Generic typed subscriber used to receive messages.
 - [`MessageType`](./message_types.md) — Trait for enabling custom serialization of types.
