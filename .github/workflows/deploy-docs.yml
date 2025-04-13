@@ -1,37 +1,44 @@
-
-name: Deploy Docs
+name: Generate API Documentation
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-  build:
+  doc:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Protobuf Compiler (protoc)
-        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
-
-      - name: Install mdBook
-        uses: peaceiris/actions-mdbook@v1
+      - name: Set up Rust (nightly) with docs
+        uses: actions-rs/toolchain@v1
         with:
-          mdbook-version: 'latest'
+          toolchain: nightly
+          override: true
+          components: rust-docs
 
-      - name: Build mdBook documentation
-        run: mdbook build docs
+      - name: Cache Cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Build Rust API docs
-        run: cargo doc --no-deps --workspace
-        env:
-          RUSTFLAGS: "--cfg=docsrs"
+      - name: Cache target directory
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Generate Rust API documentation
+        run: RUSTFLAGS="--cfg docsrs" cargo doc --no-deps --workspace
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/book
+          publish_dir: ./target/doc
