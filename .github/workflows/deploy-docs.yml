@@ -37,7 +37,7 @@ jobs:
       - name: Generate Rust API documentation
         run: |
           export RUSTDOCFLAGS="--cfg docsrs"
-          cargo +nightly doc --no-deps --workspace --exclude rustecal-samples
+          cargo +nightly doc --no-deps --workspace --exclude ../rustecal-samples
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
