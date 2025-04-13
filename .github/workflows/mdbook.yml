@@ -1,4 +1,4 @@
-name: GitHub Pages
+name: Deploy Documentation
 
 on:
   push:
@@ -20,11 +20,21 @@ jobs:
         with:
           mdbook-version: latest
 
-      - name: Build the book
+      - name: Build mdBook
         run: mdbook build docs
+
+      - name: Build Rust API docs
+        run: cargo doc --no-deps --workspace
+
+      - name: Prepare GitHub Pages content
+        run: |
+          mkdir public
+          cp -r docs/book/* public/
+          mkdir -p public/api
+          cp -r target/doc/* public/api/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/book
+          publish_dir: ./public
