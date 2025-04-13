@@ -1,6 +1,11 @@
 use std::{env, path::PathBuf};
 
 fn main() {
+    if std::env::var("DOCS_RS").is_ok() || std::env::var("CARGO_CFG_DOCSRS").is_ok() {
+        println!("cargo:warning=Skipping bindgen during docs.rs build");
+        return;
+    }
+
     // Prepare bindgen builder
     let mut builder = bindgen::Builder::default()
         .header("wrapper.h")

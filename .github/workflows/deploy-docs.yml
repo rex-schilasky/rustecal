@@ -1,40 +1,37 @@
-name: Deploy Documentation
+
+name: Deploy Docs
 
 on:
   push:
     branches:
       - main
 
-permissions:
-  contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Install Protobuf Compiler (protoc)
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
       - name: Install mdBook
         uses: peaceiris/actions-mdbook@v1
         with:
-          mdbook-version: latest
+          mdbook-version: 'latest'
 
-      - name: Build mdBook
+      - name: Build mdBook documentation
         run: mdbook build docs
 
       - name: Build Rust API docs
         run: cargo doc --no-deps --workspace
-
-      - name: Prepare GitHub Pages content
-        run: |
-          mkdir public
-          cp -r docs/book/* public/
-          mkdir -p public/api
-          cp -r target/doc/* public/api/
+        env:
+          RUSTFLAGS: "--cfg=docsrs"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          publish_dir: ./docs/book
