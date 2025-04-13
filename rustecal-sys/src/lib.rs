@@ -4,4 +4,5 @@
 #![allow(non_snake_case)]
 #![cfg_attr(docsrs, doc(hidden))]
 
+#[cfg(not(docsrs))]
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
