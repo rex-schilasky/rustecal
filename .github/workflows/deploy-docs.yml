@@ -37,7 +37,7 @@ jobs:
       - name: Generate Rust API documentation (excluding samples)
         run: |
           export RUSTDOCFLAGS="--cfg docsrs"
-          cargo +nightly doc --no-deps --manifest-path doc-workspace.toml
+          cargo +nightly doc --no-deps --manifest-path .doc/Cargo.toml
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
