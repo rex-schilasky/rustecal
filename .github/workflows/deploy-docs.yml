@@ -39,12 +39,12 @@ jobs:
           export RUSTDOCFLAGS="--cfg docsrs"
           cargo +nightly doc --workspace --no-deps \
           --exclude rustecal-sys \
-          --exclude hello_send \
-          --exclude hello_receive \
-          --exclude person_send \
-          --exclude person_receive \
-          --exclude bytes_send \
-          --exclude bytes_receive
+          --exclude rustecal-samples/hello_send \
+          --exclude rustecal-samples/hello_receive \
+          --exclude rustecal-samples/person_send \
+          --exclude rustecal-samples/person_receive \
+          --exclude rustecal-samples/bytes_send \
+          --exclude rustecal-samples/bytes_receive
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
