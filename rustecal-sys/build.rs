@@ -1,6 +1,10 @@
 use std::{env, path::PathBuf};
 
 fn main() {
+    if std::env::var("DOCS_RS").is_ok() || std::env::var("CARGO_DOC").is_ok() {
+        println!("cargo:warning=Skipping bindgen during documentation");
+        return;
+    }
     // Prepare bindgen builder
     let mut builder = bindgen::Builder::default()
         .header("wrapper.h")
