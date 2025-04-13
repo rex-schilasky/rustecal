@@ -1,8 +1,0 @@
-[workspace]
-members = [
-    "../rustecal",
-    "../rustecal-sys",
-    "../rustecal-types-bytes",
-    "../rustecal-types-protobuf",
-    "../rustecal-types-string"
-]
