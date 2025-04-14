@@ -20,14 +20,27 @@ jobs:
           override: true
           components: rust-docs
 
-      - name: Generate Rust API documentation (doc-only workspace)
-        working-directory: .doc
+      - name: Cache Cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache target directory
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Generate Rust API documentation (docs-only workspace)
         run: |
           export RUSTDOCFLAGS="--cfg docsrs"
-          cargo +nightly doc --no-deps --workspace
+          cargo +nightly doc --no-deps --workspace --manifest-path .doc/Cargo.toml
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .doc/target/doc
+          publish_dir: ./target/doc
