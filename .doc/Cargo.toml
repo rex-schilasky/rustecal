@@ -1,9 +1,0 @@
-[workspace]
-members = [
-    "../rustecal",
-    "../rustecal-types-string",
-    "../rustecal-types-bytes",
-    "../rustecal-types-protobuf"
-]
-
-resolver = "2"

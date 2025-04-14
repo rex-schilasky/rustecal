@@ -34,10 +34,10 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-target-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Generate Rust API documentation (docs-only workspace)
-        run: |
-          export RUSTDOCFLAGS="--cfg docsrs"
-          cargo +nightly doc --no-deps --workspace --manifest-path .doc/Cargo.toml
+      # - name: Generate Rust API documentation (docs-only workspace)
+      #   run: |
+      #     export RUSTDOCFLAGS="--cfg docsrs"
+      #     cargo +nightly doc --no-deps --workspace --manifest-path .doc/Cargo.toml
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
