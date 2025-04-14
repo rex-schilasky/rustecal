@@ -11,7 +11,6 @@ Safe and idiomatic Rust bindings for the [eCAL](https://github.com/eclipse-ecal/
 
 - 📡 High-performance publish/subscribe middleware (based on eCAL)
 - 🦀 Idiomatic Rust API over eCAL C-API
-- 🧵 Multi-topic and multi-type communication
 - 💬 Type-safe messaging for:
   - `StringMessage`
   - `BytesMessage`
