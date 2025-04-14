@@ -1,6 +1,5 @@
 # rustecal
 
-[![Build Status](https://github.com/rex-schilasky/rustecal/actions/workflows/ci.yml/badge.svg)](https://github.com/rex-schilasky/rustecal/actions)
 [![Docs](https://img.shields.io/badge/docs-mdbook-blue)](https://rex-schilasky.github.io/rustecal/)
 
 Safe and idiomatic Rust bindings for the [eCAL](https://github.com/eclipse-ecal/ecal) middleware — a high-performance IPC framework designed for distributed real-time systems.
