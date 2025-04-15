@@ -1,27 +1,32 @@
+use rustecal::{Ecal, EcalComponents};
 use rustecal::service::server::ServiceServer;
-use rustecal::service::types::{ServiceRequest, ServiceResponse};
+use rustecal::service::types::{ServiceRequest, ServiceResponse, MethodInfo};
 
-fn main() {
-    // Create a new service server with name "echo_service"
-    let mut server = ServiceServer::new("echo_service");
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize eCAL
+    Ecal::initialize(Some("echo server rust"), EcalComponents::DEFAULT)
+        .expect("eCAL initialization failed");
 
-    // Set the callback to handle incoming requests
-    server.set_callback(|request: ServiceRequest| -> ServiceResponse {
-        println!("Received request: {:?}", String::from_utf8_lossy(&request.payload));
+    // Create the service server
+    let mut server = ServiceServer::new("echo_service")?;
 
-        // Echo back the request payload with a prefix
-        let mut response_payload = b"Echo: ".to_vec();
-        response_payload.extend(request.payload);
+    // Register the "echo" method
+    server.add_method("echo", Box::new(|info: MethodInfo, req: ServiceRequest| {
+        println!(
+            "Received call on method '{}', payload: {:?}",
+            info.method_name,
+            String::from_utf8_lossy(&req.payload)
+        );
 
         ServiceResponse {
             success: true,
-            payload: response_payload,
+            payload: req.payload,
+            error_message: None,
         }
-    });
+    }))?;
 
-    println!("Service server is running. Press Ctrl+C to exit...");
+    println!("Echo service running. Press Ctrl+C to exit.");
 
-    // Keep the server alive
     loop {
         std::thread::sleep(std::time::Duration::from_secs(1));
     }

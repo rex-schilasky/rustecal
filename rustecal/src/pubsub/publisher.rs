@@ -1,5 +1,5 @@
-use crate::pubsub::types::{DataTypeInfo, TopicId};
 use rustecal_sys::*;
+use crate::pubsub::types::{DataTypeInfo, TopicId};
 use std::ffi::{CStr, CString};
 use std::ptr;
 
