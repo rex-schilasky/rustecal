@@ -1,10 +1,13 @@
+// src/service/client.rs
+
 use crate::service::types::{CallState, ServiceRequest, ServiceResponse};
+use crate::service::client_instance::ClientInstance;
 use rustecal_sys::*;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_void;
 use std::ptr;
 
-/// Represents a client that can call an eCAL service.
+/// A high-level abstraction representing a service client that can call all available service servers.
 pub struct ServiceClient {
     pub(crate) handle: *mut eCAL_ServiceClient,
 }
@@ -12,7 +15,6 @@ pub struct ServiceClient {
 impl ServiceClient {
     pub fn new(service_name: &str) -> Result<Self, String> {
         let c_service = CString::new(service_name).map_err(|_| "Invalid service name")?;
-
         let handle = unsafe { eCAL_ServiceClient_New(c_service.as_ptr(), std::ptr::null(), 0, None) };
 
         if handle.is_null() {
@@ -22,15 +24,23 @@ impl ServiceClient {
         }
     }
 
+    /// Calls a method and returns the first response (if any).
     pub fn call(&self, method: &str, request: ServiceRequest, timeout_ms: Option<i32>) -> Option<ServiceResponse> {
+        let mut responses = self.call_all(method, request, timeout_ms)?;
+        responses.pop()
+    }
+
+    /// Calls a method and returns all responses received from servers.
+    pub fn call_all(&self, method: &str, request: ServiceRequest, timeout_ms: Option<i32>) -> Option<Vec<ServiceResponse>> {
         let c_method = CString::new(method).ok()?;
         let mut response_ptr: *mut eCAL_SServiceResponse = ptr::null_mut();
         let mut response_len: usize = 0;
 
-        let timeout_ptr = match timeout_ms {
-            Some(ref value) => value as *const i32,
-            None => ptr::null(),
-        };
+        let timeout_ref: Option<i32> = timeout_ms;
+        let timeout_ptr = timeout_ref
+            .as_ref()
+            .map(|v| v as *const i32)
+            .unwrap_or(ptr::null());
 
         let result = unsafe {
             eCAL_ServiceClient_CallWithResponse(
@@ -48,51 +58,44 @@ impl ServiceClient {
             return None;
         }
 
-        let response = unsafe { *response_ptr };
-
-        let success = CallState::from(response.call_state).is_success();
-
-        let error_msg = if response.error_msg.is_null() {
-            None
-        } else {
-            Some(unsafe { CStr::from_ptr(response.error_msg) }.to_string_lossy().into_owned())
-        };
-
-        // === INTERMEDIATE FIX: response_length is not correctly set in current C API ===
-        // Assume null-terminated string for now. This will fail for binary data!
-        let payload = if !response.response.is_null() {
-            unsafe {
-                CStr::from_ptr(response.response as *const i8)
-                    .to_bytes()
-                    .to_vec()
-            }
-        } else {
-            vec![]
-        };
-
-        /*
-        // === FINAL VERSION (commented out until eCAL fixes response_length bug) ===
-        let payload = if !response.response.is_null() && response.response_length > 0 {
-            unsafe {
-                std::slice::from_raw_parts(
-                    response.response as *const u8,
-                    response.response_length,
-                ).to_vec()
-            }
-        } else {
-            vec![]
-        };
-        */
+        let mut responses = Vec::new();
 
         unsafe {
+            for i in 0..response_len {
+                let item = *response_ptr.add(i);
+                let success = CallState::from(item.call_state).is_success();
+
+                let error_msg = if item.error_msg.is_null() {
+                    None
+                } else {
+                    Some(CStr::from_ptr(item.error_msg).to_string_lossy().into_owned())
+                };
+
+                // FIXME: Intermediate fix: fall back to null-terminated string
+                //        In future, use item.response_length (currently unreliable)
+                let payload = if item.response.is_null() {
+                    vec![]
+                } else {
+                    CStr::from_ptr(item.response as *const i8).to_bytes().to_vec()
+                };
+
+                responses.push(ServiceResponse {
+                    success,
+                    payload,
+                    error_msg,
+                });
+            }
+
             eCAL_Free(response_ptr as *mut c_void);
         }
 
-        Some(ServiceResponse {
-            success,
-            payload,
-            error_msg,
-        })
+        Some(responses)
+    }
+
+    /// Returns a list of connected `ClientInstance`s.
+    pub fn get_client_instances(&self) -> Vec<ClientInstance> {
+        // TODO: Implement this in the next step using eCAL_GetServiceClientInstances
+        vec![]
     }
 }
 
