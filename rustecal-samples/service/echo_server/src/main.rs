@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ServiceResponse {
             success: true,
             payload: req.payload,
-            error_message: None,
+            error_msg: None,
         }
     }))?;
 

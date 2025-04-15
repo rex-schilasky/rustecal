@@ -1,5 +1,32 @@
 //! Shared service-related data structures for client and server.
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CallState {
+    None,
+    Executed,
+    Timeout,
+    Failed,
+    Unknown(i32),
+}
+
+impl CallState {
+    pub fn is_success(&self) -> bool {
+        matches!(self, CallState::Executed)
+    }
+}
+
+impl From<i32> for CallState {
+    fn from(value: i32) -> Self {
+        match value {
+            x if x == rustecal_sys::eCAL_eCallState_eCAL_eCallState_none => CallState::None,
+            x if x == rustecal_sys::eCAL_eCallState_eCAL_eCallState_executed => CallState::Executed,
+            x if x == rustecal_sys::eCAL_eCallState_eCAL_eCallState_timeouted => CallState::Timeout,
+            x if x == rustecal_sys::eCAL_eCallState_eCAL_eCallState_failed => CallState::Failed,
+            other => CallState::Unknown(other),
+        }
+    }
+}
+
 /// A service request as passed to or received from eCAL service callbacks.
 #[derive(Debug, Clone)]
 pub struct ServiceRequest {
@@ -13,7 +40,7 @@ pub struct ServiceResponse {
     /// Indicates whether the service call was successful.
     pub success: bool,
     /// Optional error message (usually empty if success = true).
-    pub error_message: Option<String>,
+    pub error_msg: Option<String>,
     /// Raw byte buffer containing the serialized response.
     pub payload: Vec<u8>,
 }
