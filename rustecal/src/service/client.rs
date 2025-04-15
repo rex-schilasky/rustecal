@@ -52,18 +52,37 @@ impl ServiceClient {
 
         let success = CallState::from(response.call_state).is_success();
 
-        let error_message = if response.error_msg.is_null() {
+        let error_msg = if response.error_msg.is_null() {
             None
         } else {
             Some(unsafe { CStr::from_ptr(response.error_msg) }.to_string_lossy().into_owned())
         };
 
-        let payload = unsafe {
-            std::slice::from_raw_parts(
-                response.response as *const u8,
-                response.response_length,
-            ).to_vec()
+        // === INTERMEDIATE FIX: response_length is not correctly set in current C API ===
+        // Assume null-terminated string for now. This will fail for binary data!
+        let payload = if !response.response.is_null() {
+            unsafe {
+                CStr::from_ptr(response.response as *const i8)
+                    .to_bytes()
+                    .to_vec()
+            }
+        } else {
+            vec![]
         };
+
+        /*
+        // === FINAL VERSION (commented out until eCAL fixes response_length bug) ===
+        let payload = if !response.response.is_null() && response.response_length > 0 {
+            unsafe {
+                std::slice::from_raw_parts(
+                    response.response as *const u8,
+                    response.response_length,
+                ).to_vec()
+            }
+        } else {
+            vec![]
+        };
+        */
 
         unsafe {
             eCAL_Free(response_ptr as *mut c_void);
@@ -71,8 +90,8 @@ impl ServiceClient {
 
         Some(ServiceResponse {
             success,
-            error_msg: error_message,
             payload,
+            error_msg,
         })
     }
 }
