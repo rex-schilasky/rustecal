@@ -15,24 +15,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         payload: b"Hello from Rust client".to_vec(),
     };
 
-    // Call the service with a timeout of 1000 milliseconds (1 second)
-    match client.call(request, 1000) {
-        Some(response) => {
-            if response.success {
-                println!(
-                    "Received echo response: {:?}",
-                    String::from_utf8_lossy(&response.payload)
-                );
-            } else {
-                println!(
-                    "Service responded with error: {:?}",
-                    response.error_message.unwrap_or("Unknown error".to_string())
-                );
+    while Ecal::ok() {
+        // Call the service with a timeout of 1000 milliseconds (1 second)
+        match client.call(request.clone(), 1000) {
+            Some(response) => {
+                if response.success {
+                    println!(
+                        "Received echo response: {:?}",
+                        String::from_utf8_lossy(&response.payload)
+                    );
+                } else {
+                    println!(
+                        "Service responded with error: {:?}",
+                        response.error_message.unwrap_or("Unknown error".to_string())
+                    );
+                }
+            }
+            None => {
+                println!("Service call failed or no response received.");
             }
         }
-        None => {
-            println!("Service call failed or no response received.");
-        }
+
+        std::thread::sleep(std::time::Duration::from_millis(500));
     }
 
     Ok(())
