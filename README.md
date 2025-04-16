@@ -1,8 +1,6 @@
 # rustecal
 
-[![Docs](https://img.shields.io/badge/docs-mdbook-blue)](https://rex-schilasky.github.io/rustecal/)
-
-Safe and idiomatic Rust bindings for the [eCAL](https://github.com/eclipse-ecal/ecal) middleware — a high-performance IPC framework designed for distributed real-time systems.
+Rust bindings for the high-performance [eCAL](https://github.com/eclipse-ecal/ecal) middleware, providing efficient pub/sub and service-based communication for interprocess and distributed systems.
 
 ---
 
@@ -113,12 +111,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Documentation
 
-- 📘 API Docs: [docs.rs/rustecal](https://docs.rs/rustecal)
-- 📖 Guide & Examples: see `docs/` (mdBook)
+📚 Full user guide: [https://rex-schilasky.github.io/rustecal](https://rex-schilasky.github.io/rustecal)
+
+```bash
+cd docs/
+mdbook serve
+```
 
 ---
 
 ## License
 
-Licensed under the Apache License 2.0 (see [LICENSE](./LICENSE))  
-© 2024–2025 Eclipse Contributors / Rex Schilasky
+Licensed under Apache-2.0 or MIT.
+
+---
+
+## Maintainer
+
+[Rex Schilasky](https://github.com/rex-schilasky)
