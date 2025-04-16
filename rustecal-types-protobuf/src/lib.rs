@@ -19,7 +19,7 @@
 
 use prost::Message;
 use rustecal::pubsub::{PublisherMessage, SubscriberMessage};
-use rustecal::pubsub::types::DataTypeInfo;
+use rustecal::ecal::types::DataTypeInfo;
 
 /// Marker trait to opt-in a Protobuf type for use with eCAL.
 ///

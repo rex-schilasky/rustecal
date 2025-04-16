@@ -1,7 +1,7 @@
 //! Common eCAL types shared across pubsub and service layers.
 
 use rustecal_sys::*;
-use std::ffi::{CStr, CString};
+use std::ffi::{CStr};
 use std::os::raw::c_char;
 
 /// Represents a globally unique entity in eCAL.

@@ -1,39 +1,37 @@
-// src/service/client_instance.rs
-
-use crate::service::types::{CallState, ServiceRequest, ServiceResponse};
+use crate::service::types::{ServiceId, ServiceRequest, ServiceResponse};
 use rustecal_sys::*;
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 use std::os::raw::c_void;
-use std::ptr;
 
 /// Represents a connection to a specific service server instance.
+#[derive(Debug)]
 pub struct ClientInstance {
-    pub(crate) handle: *mut eCAL_ClientInstance,
+    pub(crate) client_handle: *mut eCAL_ServiceClient,
+    pub(crate) instance: eCAL_SServiceId,
 }
 
 impl ClientInstance {
-    /// Calls a method on this specific service instance and returns a response.
-    ///
-    /// # Arguments
-    /// * `method` - The name of the method to call.
-    /// * `request` - The request payload.
-    /// * `timeout_ms` - Optional timeout in milliseconds.
-    pub fn call(
-        &self,
-        method: &str,
-        request: ServiceRequest,
-        timeout_ms: Option<i32>,
-    ) -> Option<ServiceResponse> {
-        let c_method = CString::new(method).ok()?;
+    pub fn from_ffi(client_handle: *mut eCAL_ServiceClient, raw: &eCAL_SServiceId) -> Self {
+        Self {
+            client_handle,
+            instance: *raw,
+        }
+    }
 
+    pub fn id(&self) -> ServiceId {
+        unsafe { ServiceId::from_ffi(&self.instance) }
+    }
+
+    pub fn call(&self, method: &str, request: ServiceRequest, timeout_ms: Option<i32>) -> Option<ServiceResponse> {
+        let c_method = CString::new(method).ok()?;
         let timeout_ptr = timeout_ms
             .as_ref()
-            .map(|v| v as *const i32)
-            .unwrap_or(ptr::null());
+            .map(|t| t as *const i32)
+            .unwrap_or(std::ptr::null());
 
         let response_ptr = unsafe {
             eCAL_ClientInstance_CallWithResponse(
-                self.handle,
+                self.client_handle as *mut eCAL_ClientInstance,
                 c_method.as_ptr(),
                 request.payload.as_ptr() as *const c_void,
                 request.payload.len(),
@@ -42,35 +40,13 @@ impl ClientInstance {
         };
 
         if response_ptr.is_null() {
-            return None;
+            return Some(ServiceResponse {
+                success: false,
+                error_msg: Some("call failed".into()),
+                payload: vec![],
+            });
         }
 
-        let response = unsafe { &*response_ptr };
-
-        let success = CallState::from(response.call_state).is_success();
-
-        let error_msg = if response.error_msg.is_null() {
-            None
-        } else {
-            Some(unsafe { CStr::from_ptr(response.error_msg) }.to_string_lossy().into_owned())
-        };
-
-        // FIXME: This is an intermediate workaround.
-        // Properly interpret response_length once it is set reliably.
-        let payload = if response.response.is_null() {
-            vec![]
-        } else {
-            unsafe { CStr::from_ptr(response.response as *const i8).to_bytes().to_vec() }
-        };
-
-        unsafe {
-            eCAL_Free(response_ptr as *mut c_void);
-        }
-
-        Some(ServiceResponse {
-            success,
-            payload,
-            error_msg,
-        })
+        Some(unsafe { ServiceResponse::from_raw_response(response_ptr) })
     }
 }
