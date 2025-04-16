@@ -74,7 +74,6 @@ impl ServiceClient {
                     Some(CStr::from_ptr(item.error_msg).to_string_lossy().into_owned())
                 };
 
-                // Workaround: response_length may be uninitialized → use CStr fallback
                 let payload = if item.response.is_null() {
                     vec![]
                 } else {
@@ -94,10 +93,31 @@ impl ServiceClient {
         Some(responses)
     }
 
-    /// Returns the list of known server instances for this client.
+    /// Returns a list of connected `ClientInstance`s (each one representing a server).
     pub fn get_client_instances(&self) -> Vec<ClientInstance> {
-        // TODO: Implement with eCAL_ServiceClient_GetClientInstances()
-        vec![]
+        let mut result = Vec::new();
+
+        unsafe {
+            let list_ptr = eCAL_ServiceClient_GetClientInstances(self.handle);
+            if list_ptr.is_null() {
+                return result;
+            }
+
+            let mut offset = 0;
+            loop {
+                let instance_ptr = *list_ptr.add(offset);
+                if instance_ptr.is_null() {
+                    break;
+                }
+
+                result.push(ClientInstance::from_raw(instance_ptr));
+                offset += 1;
+            }
+
+            eCAL_ClientInstances_Delete(list_ptr);
+        }
+
+        result
     }
 }
 

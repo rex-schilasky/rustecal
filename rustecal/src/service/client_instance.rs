@@ -1,28 +1,29 @@
-use crate::service::types::{ServiceId, ServiceRequest, ServiceResponse};
+use crate::service::types::{ServiceRequest, ServiceResponse};
 use rustecal_sys::*;
-use std::ffi::CString;
+use std::ffi::{CString, CStr};
 use std::os::raw::c_void;
 
 /// Represents a connection to a specific service server instance.
 #[derive(Debug)]
 pub struct ClientInstance {
-    pub(crate) client_handle: *mut eCAL_ServiceClient,
-    pub(crate) instance: eCAL_SServiceId,
+    pub(crate) instance: *mut eCAL_ClientInstance,
 }
 
 impl ClientInstance {
-    pub fn from_ffi(client_handle: *mut eCAL_ServiceClient, raw: &eCAL_SServiceId) -> Self {
+    /// Constructs a `ClientInstance` from a raw pointer returned by eCAL.
+    pub fn from_raw(raw: *mut eCAL_ClientInstance) -> Self {
         Self {
-            client_handle,
-            instance: *raw,
+            instance: raw,
         }
     }
 
-    pub fn id(&self) -> ServiceId {
-        unsafe { ServiceId::from_ffi(&self.instance) }
-    }
-
-    pub fn call(&self, method: &str, request: ServiceRequest, timeout_ms: Option<i32>) -> Option<ServiceResponse> {
+    /// Calls a method on this specific service instance.
+    pub fn call(
+        &self,
+        method: &str,
+        request: ServiceRequest,
+        timeout_ms: Option<i32>,
+    ) -> Option<ServiceResponse> {
         let c_method = CString::new(method).ok()?;
         let timeout_ptr = timeout_ms
             .as_ref()
@@ -31,7 +32,7 @@ impl ClientInstance {
 
         let response_ptr = unsafe {
             eCAL_ClientInstance_CallWithResponse(
-                self.client_handle as *mut eCAL_ClientInstance,
+                self.instance,
                 c_method.as_ptr(),
                 request.payload.as_ptr() as *const c_void,
                 request.payload.len(),
@@ -47,6 +48,32 @@ impl ClientInstance {
             });
         }
 
-        Some(unsafe { ServiceResponse::from_raw_response(response_ptr) })
+        unsafe {
+            let response = *response_ptr;
+
+            let success = crate::service::types::CallState::from(response.call_state).is_success();
+
+            let error_msg = if response.error_msg.is_null() {
+                None
+            } else {
+                Some(CStr::from_ptr(response.error_msg).to_string_lossy().into_owned())
+            };
+
+            let payload = if response.response.is_null() {
+                vec![]
+            } else {
+                CStr::from_ptr(response.response as *const i8)
+                    .to_bytes()
+                    .to_vec()
+            };
+
+            eCAL_Free(response_ptr as *mut c_void);
+
+            Some(ServiceResponse {
+                success,
+                error_msg,
+                payload,
+            })
+        }
     }
 }
