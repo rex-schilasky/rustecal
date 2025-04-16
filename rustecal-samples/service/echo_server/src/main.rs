@@ -1,6 +1,6 @@
 use rustecal::{Ecal, EcalComponents};
 use rustecal::service::server::ServiceServer;
-use rustecal::service::types::{ServiceRequest, ServiceResponse, MethodInfo, ServiceId};
+use rustecal::service::types::{MethodInfo};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize eCAL
@@ -10,22 +10,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create the service server
     let mut server = ServiceServer::new("echo_service")?;
 
-    // Register the "echo" method
-    server.add_method("echo", Box::new(|info: MethodInfo, req: ServiceRequest| {
+    // Register the "echo" method using the simplified API
+    server.add_method("echo", Box::new(|info: MethodInfo, req: &[u8]| {
         println!(
-            "Received call on method '{}', payload: {:?}",
+            "Received call on method '{}', payload: {}",
             info.method_name,
-            String::from_utf8_lossy(&req.payload)
+            String::from_utf8_lossy(req)
         );
 
-        ServiceResponse {
-            success: true,
-            server_id: ServiceId {
-                service_id: unsafe { std::mem::zeroed() }, // Placeholder until response is filled by core
-            },
-            payload: req.payload,
-            error_msg: None,
-        }
+        // Echo the payload back
+        req.to_vec()
     }))?;
 
     println!("Echo service running. Press Ctrl+C to exit.");

@@ -1,5 +1,4 @@
 use rustecal_sys::*;
-use std::ffi::CStr;
 
 #[derive(Debug, Clone, Copy)]
 pub enum CallState {
@@ -54,39 +53,6 @@ pub struct ServiceResponse {
     pub payload: Vec<u8>,
 }
 
-impl ServiceResponse {
-    pub fn from_struct(response: &eCAL_SServiceResponse) -> Self {
-        let success = CallState::from(response.call_state).is_success();
-
-        let server_id = unsafe { ServiceId::from_ffi(&response.server_id) };
-
-        let error_msg = if response.error_msg.is_null() {
-            None
-        } else {
-            Some(unsafe {
-                CStr::from_ptr(response.error_msg).to_string_lossy().into_owned()
-            })
-        };
-
-        let payload = if response.response.is_null() {
-            vec![]
-        } else {
-            unsafe {
-                CStr::from_ptr(response.response as *const i8)
-                    .to_bytes()
-                    .to_vec()
-            }
-        };
-
-        Self {
-            success,
-            server_id,
-            error_msg,
-            payload,
-        }
-    }
-}
-
 /// Metadata passed to method callbacks about the method interface.
 #[derive(Debug, Clone)]
 pub struct MethodInfo {
@@ -96,4 +62,8 @@ pub struct MethodInfo {
 }
 
 /// The service callback signature used by ServiceServer.
-pub type ServiceCallback = Box<dyn Fn(MethodInfo, ServiceRequest) -> ServiceResponse + Send + Sync + 'static>;
+///
+/// Mimics the eCAL C++ API:
+/// - Accepts `MethodInfo` and a reference to request bytes
+/// - Returns response bytes (`Vec<u8>`)
+pub type ServiceCallback = Box<dyn Fn(MethodInfo, &[u8]) -> Vec<u8> + Send + Sync + 'static>;

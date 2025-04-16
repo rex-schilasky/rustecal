@@ -1,5 +1,6 @@
 use crate::service::client_instance::ClientInstance;
-use crate::service::types::{ServiceRequest, ServiceResponse};
+use crate::service::types::{ServiceRequest};
+use crate::service::response::ServiceResponse;
 use rustecal_sys::*;
 use std::ffi::CString;
 use std::os::raw::c_void;
