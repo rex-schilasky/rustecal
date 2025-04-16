@@ -12,5 +12,6 @@ members = [
     "rustecal-samples/pubsub/person_send",
     "rustecal-samples/pubsub/person_receive",
     "rustecal-samples/service/echo_client",
+    "rustecal-samples/service/echo_client_instances",
     "rustecal-samples/service/echo_server"
     ]
