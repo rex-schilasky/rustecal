@@ -14,5 +14,7 @@
   - [Typed Publisher](api/publisher.md)
   - [Typed Subscriber](api/subscriber.md)
   - [Supported Message Types](api/message_types.md)
+  - [Service Server](api/service_server.md)
+  - [Service Client](api/service_client.md)
 - [Project Status](project_status.md)
 - [About](about.md)

@@ -3,7 +3,7 @@ use rustecal_types_bytes::BytesMessage;
 use rustecal::pubsub::typed_subscriber::Received;
 
 fn main() {
-    Ecal::initialize(Some("bytes subscriber rust"), EcalComponents::DEFAULT)
+    Ecal::initialize(Some("blob receive rust"), EcalComponents::DEFAULT)
         .expect("eCAL initialization failed");
 
     let mut subscriber = TypedSubscriber::<BytesMessage>::new("blob")

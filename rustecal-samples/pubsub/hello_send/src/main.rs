@@ -2,7 +2,7 @@ use rustecal::{Ecal, EcalComponents, TypedPublisher};
 use rustecal_types_string::StringMessage;
 
 fn main() {
-    Ecal::initialize(Some("hello string publisher rust"), EcalComponents::DEFAULT)
+    Ecal::initialize(Some("hello send rust"), EcalComponents::DEFAULT)
         .expect("eCAL initialization failed");
 
     let publisher: TypedPublisher<StringMessage> = TypedPublisher::<StringMessage>::new("hello")

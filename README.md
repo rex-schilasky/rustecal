@@ -1,88 +1,122 @@
 # rustecal
 
-[![Build Status](https://github.com/rex-schilasky/rustecal/actions/workflows/ci.yml/badge.svg)](https://github.com/rex-schilasky/rustecal/actions)
-[![Docs](https://img.shields.io/badge/docs-mdbook-blue)](https://rex-schilasky.github.io/rustecal/)
-
-Safe and idiomatic Rust bindings for the [eCAL](https://github.com/eclipse-ecal/ecal) middleware — a high-performance IPC framework designed for distributed real-time systems.
+Rust bindings for the high-performance [eCAL](https://github.com/eclipse-ecal/ecal) middleware, providing efficient pub/sub and service-based communication for interprocess and distributed systems.
 
 ---
 
 ## Features
 
-- 📡 High-performance publish/subscribe middleware (based on eCAL)
-- 🦀 Idiomatic Rust API over eCAL C-API
-- 💬 Type-safe messaging for:
-  - `StringMessage`
-  - `BytesMessage`
-  - `ProtobufMessage<T>` (based on `prost`)
-- 🧪 Works on Linux and Windows (via `bindgen` + `cc`)
-- 📖 Modular message support via `rustecal-types-*` crates
+- Idiomatic Rust interface to the eCAL C API
+- Zero-copy shared memory transport
+- Type-safe publish/subscribe and service communication
+- Modular type support: String, Binary, Protobuf
+- Fully runtime-compatible with C++ eCAL systems
 
 ---
 
-## Usage
+## Examples
 
-Add the following to your `Cargo.toml`:
-
-```toml
-[dependencies]
-rustecal = { path = "path/to/rustecal" }
-rustecal-types-string = { path = "path/to/rustecal-types-string" }
-```
-
-Example (sending a string message):
+### Publisher
 
 ```rust
+use rustecal::{Ecal, EcalComponents};
 use rustecal::pubsub::Publisher;
-use rustecal::types::StringMessage;
 
-let _ecal = rustecal::Ecal::initialize("hello_send")?;
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    Ecal::initialize(Some("rust publisher"), EcalComponents::DEFAULT)?;
+    let mut pub = Publisher::<String>::new("chatter")?;
 
-let publisher = Publisher::<StringMessage>::builder("hello_topic").create()?;
-publisher.send("Hello from Rust!")?;
-```
-
-Example (receiving a message):
-
-```rust
-use rustecal::pubsub::Subscriber;
-use rustecal::types::StringMessage;
-
-let _ecal = rustecal::Ecal::initialize("hello_receive")?;
-
-let subscriber = Subscriber::<StringMessage>::builder("hello_topic").create()?;
-subscriber.set_callback(|msg| {
-    println!("Received: {}", msg.data());
-});
+    loop {
+        pub.send("Hello from Rust!")?;
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+}
 ```
 
 ---
 
-## Crate Structure
+### Subscriber
 
-- `rustecal`: core eCAL bindings and idiomatic API
-- `rustecal-sys`: low-level `bindgen` generated FFI bindings
-- `rustecal-types-string`, `rustecal-types-bytes`, `rustecal-types-protobuf`: message wrapper crates
+```rust
+use rustecal::{Ecal, EcalComponents};
+use rustecal::pubsub::Subscriber;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    Ecal::initialize(Some("rust subscriber"), EcalComponents::DEFAULT)?;
+    let sub = Subscriber::<String>::new("chatter")?;
+
+    sub.set_callback(|msg| {
+        println!("Received: {}", msg.payload);
+    })?;
+
+    loop {
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+}
+```
+
+---
+
+### Service Server
+
+```rust
+use rustecal::{Ecal, EcalComponents};
+use rustecal::service::server::ServiceServer;
+use rustecal::service::types::MethodInfo;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    Ecal::initialize(Some("mirror server"), EcalComponents::DEFAULT)?;
+    let mut server = ServiceServer::new("mirror")?;
+
+    server.add_method("reverse", Box::new(|_info: MethodInfo, req: &[u8]| {
+        let mut reversed = req.to_vec();
+        reversed.reverse();
+        reversed
+    }))?;
+
+    loop {
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+}
+```
+
+---
+
+### Service Client
+
+```rust
+use rustecal::{Ecal, EcalComponents};
+use rustecal::service::client::ServiceClient;
+use rustecal::service::types::ServiceRequest;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    Ecal::initialize(Some("mirror client"), EcalComponents::DEFAULT)?;
+    let client = ServiceClient::new("mirror")?;
+
+    let request = ServiceRequest {
+        payload: b"stressed".to_vec(),
+    };
+
+    if let Some(response) = client.call("reverse", request, Some(1000)) {
+        println!("Reversed: {}", String::from_utf8_lossy(&response.payload));
+    } else {
+        println!("No response received.");
+    }
+
+    Ok(())
+}
+```
 
 ---
 
 ## Documentation
 
-📚 Full user guide: [https://rex-schilasky.github.io/rustecal](https://rex-schilasky.github.io/rustecal)
-
-```bash
-cd docs/
-mdbook serve
-```
+- 📘 API Docs: [docs.rs/rustecal](https://docs.rs/rustecal)
+- 📖 Guide & Examples: see `docs/` (mdBook)
 
 ---
 
 ## License
 
-Licensed under Apache-2.0 or MIT.
-
----
-
-## Maintainer
-
-[Rex Schilasky](https://github.com/rex-schilasky)
+Licensed under the Apache License 2.0 (see [LICENSE](./LICENSE))  
+© 2024–2025 Eclipse Contributors / Rex Schilasky

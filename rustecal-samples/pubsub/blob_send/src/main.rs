@@ -2,7 +2,7 @@ use rustecal::{Ecal, EcalComponents, TypedPublisher};
 use rustecal_types_bytes::BytesMessage;
 
 fn main() {
-    Ecal::initialize(Some("bytes publisher rust"), EcalComponents::DEFAULT)
+    Ecal::initialize(Some("blob send rust"), EcalComponents::DEFAULT)
         .expect("eCAL initialization failed");
 
     let publisher = TypedPublisher::<BytesMessage>::new("blob")

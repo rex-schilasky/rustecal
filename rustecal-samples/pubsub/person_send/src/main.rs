@@ -15,7 +15,7 @@ use people::Person;
 impl IsProtobufType for Person {}
 
 fn main() {
-    Ecal::initialize(Some("person protobuf publisher rust"), EcalComponents::DEFAULT)
+    Ecal::initialize(Some("person send rust"), EcalComponents::DEFAULT)
         .expect("eCAL initialization failed");
 
     let publisher = TypedPublisher::<ProtobufMessage<Person>>::new("person")
