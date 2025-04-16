@@ -1,5 +1,6 @@
 use rustecal_sys::*;
-use crate::pubsub::types::{DataTypeInfo, TopicId};
+use crate::ecal::types::DataTypeInfo;
+use crate::pubsub::types::TopicId;
 use std::ffi::{CStr, CString};
 use std::ptr;
 
@@ -133,7 +134,7 @@ impl Publisher {
             if raw.is_null() {
                 None
             } else {
-                Some(*(raw as *const TopicId))
+                Some((*(raw as *const TopicId)).clone())
             }
         }
     }
