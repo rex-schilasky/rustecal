@@ -43,3 +43,5 @@ pub use pubsub::{
 // Optional if needed by demos:
 pub use pubsub::publisher::Publisher;
 pub use pubsub::subscriber::Subscriber;
+// Service module
+pub mod service;

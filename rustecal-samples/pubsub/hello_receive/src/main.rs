@@ -3,7 +3,7 @@ use rustecal_types_string::StringMessage;
 use rustecal::pubsub::typed_subscriber::Received;
 
 fn main() {
-    Ecal::initialize(Some("hello string subscriber rust"), EcalComponents::DEFAULT)
+    Ecal::initialize(Some("hello receive rust"), EcalComponents::DEFAULT)
         .expect("eCAL initialization failed");
 
     let mut subscriber = TypedSubscriber::<StringMessage>::new("hello")

@@ -1,5 +1,6 @@
 use rustecal_sys::*;
-use crate::pubsub::types::{DataTypeInfo, TopicId};
+use crate::ecal::types::DataTypeInfo;
+use crate::pubsub::types::TopicId;
 use std::ffi::{CString, CStr, c_void};
 use std::ptr;
 
@@ -126,7 +127,7 @@ impl Subscriber {
             if raw.is_null() {
                 None
             } else {
-                Some(*(raw as *const TopicId))
+                Some((*(raw as *const TopicId)).clone())
             }
         }
     }

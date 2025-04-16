@@ -17,7 +17,7 @@ use people::Person;
 impl IsProtobufType for Person {}
 
 fn main() {
-    Ecal::initialize(Some("person protobuf subscriber rust"), EcalComponents::DEFAULT)
+    Ecal::initialize(Some("person receive rust"), EcalComponents::DEFAULT)
         .expect("eCAL initialization failed");
 
     let mut subscriber = TypedSubscriber::<ProtobufMessage<Person>>::new("person")

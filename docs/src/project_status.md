@@ -1,10 +1,11 @@
 # Roadmap
 
 - [x] Cross-platform support (Windows, Linux)
-- [x] Safe API for initialization, shutdown, and pub/sub
-- [x] Typed pub/sub APIs
+- [x] Safe API for initialization, shutdown
+- [x] Binary publish/subscribe API
+- [x] Typed publish/subscribe API
 - [x] Modular type crates (string, bytes, protobuf)
-- [x] Examples for all supported types
+- [x] Binary server/client API
+- [x] Examples for all publish/subscribe and client/server
 - [ ] Protobuf descriptor introspection
-- [ ] eCAL Services (RPC-style)
 - [ ] Monitoring and logging support

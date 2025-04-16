@@ -6,4 +6,5 @@ edition = "2024"
 [dependencies]
 rustecal-sys = { path = "../rustecal-sys" }
 
+libc = "0.2"
 bitflags = "2.4"

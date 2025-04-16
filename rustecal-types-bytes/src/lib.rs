@@ -5,7 +5,7 @@
 //! enabling ergonomic and type-safe publishing and subscribing of binary blobs.
 
 use rustecal::{PublisherMessage, SubscriberMessage};
-use rustecal::pubsub::types::DataTypeInfo;
+use rustecal::ecal::types::DataTypeInfo;
 
 /// A wrapper for raw binary data transmitted via eCAL.
 ///

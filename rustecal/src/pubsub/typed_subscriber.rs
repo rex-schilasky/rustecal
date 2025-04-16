@@ -1,5 +1,6 @@
 use crate::pubsub::subscriber::Subscriber;
-use crate::pubsub::types::{DataTypeInfo, TopicId};
+use crate::ecal::types::DataTypeInfo;
+use crate::pubsub::types::TopicId;
 use rustecal_sys::{eCAL_SDataTypeInformation, eCAL_SReceiveCallbackData, eCAL_STopicId};
 use std::ffi::{c_void, CStr};
 use std::marker::PhantomData;
