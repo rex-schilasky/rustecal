@@ -19,17 +19,24 @@ Rust bindings for the high-performance [eCAL](https://github.com/eclipse-ecal/ec
 ### Publisher
 
 ```rust
-use rustecal::{Ecal, EcalComponents};
-use rustecal::pubsub::Publisher;
+use rustecal::{Ecal, EcalComponents, TypedPublisher};
+use rustecal_types_string::StringMessage;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    Ecal::initialize(Some("rust publisher"), EcalComponents::DEFAULT)?;
-    let mut pub = Publisher::<String>::new("chatter")?;
+fn main() {
+    Ecal::initialize(Some("hello publisher"), EcalComponents::DEFAULT)
+        .expect("eCAL initialization failed");
 
-    loop {
-        pub.send("Hello from Rust!")?;
+    let publisher: TypedPublisher<StringMessage> = TypedPublisher::<StringMessage>::new("chatter")
+        .expect("Failed to create publisher");
+
+    while Ecal::ok() {
+        let wrapped = StringMessage("Hello from Rust!".to_string());
+        publisher.send(&wrapped);
+
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+
+    Ecal::finalize();
 }
 ```
 
@@ -38,20 +45,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### Subscriber
 
 ```rust
-use rustecal::{Ecal, EcalComponents};
-use rustecal::pubsub::Subscriber;
+use rustecal::{Ecal, EcalComponents, TypedSubscriber};
+use rustecal_types_string::StringMessage;
+use rustecal::pubsub::typed_subscriber::Received;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    Ecal::initialize(Some("rust subscriber"), EcalComponents::DEFAULT)?;
-    let sub = Subscriber::<String>::new("chatter")?;
+fn main() {
+    Ecal::initialize(Some("hello subscriber"), EcalComponents::DEFAULT)
+        .expect("eCAL initialization failed");
 
-    sub.set_callback(|msg| {
-        println!("Received: {}", msg.payload);
-    })?;
+    let mut subscriber = TypedSubscriber::<StringMessage>::new("chatter")
+        .expect("Failed to create subscriber");
 
-    loop {
+    subscriber.set_callback(|msg: Received<StringMessage>| {
+        println!("Received : {}", msg.msg.0);
+    });
+
+    while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
+
+    Ecal::finalize();
 }
 ```
 
@@ -64,19 +77,24 @@ use rustecal::{Ecal, EcalComponents};
 use rustecal::service::server::ServiceServer;
 use rustecal::service::types::MethodInfo;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    Ecal::initialize(Some("mirror server"), EcalComponents::DEFAULT)?;
-    let mut server = ServiceServer::new("mirror")?;
+fn main() {
+    Ecal::initialize(Some("mirror server"), EcalComponents::DEFAULT)
+        .expect("eCAL initialization failed");
+
+    let mut server = ServiceServer::new("mirror")
+        .expect("Failed to create server");
 
     server.add_method("reverse", Box::new(|_info: MethodInfo, req: &[u8]| {
         let mut reversed = req.to_vec();
         reversed.reverse();
         reversed
-    }))?;
+    })).unwrap();
 
-    loop {
+    while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
+
+    Ecal::finalize();
 }
 ```
 
@@ -89,21 +107,27 @@ use rustecal::{Ecal, EcalComponents};
 use rustecal::service::client::ServiceClient;
 use rustecal::service::types::ServiceRequest;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    Ecal::initialize(Some("mirror client"), EcalComponents::DEFAULT)?;
-    let client = ServiceClient::new("mirror")?;
+fn main() {
+    Ecal::initialize(Some("mirror client"), EcalComponents::DEFAULT)
+        .expect("eCAL initialization failed");
 
-    let request = ServiceRequest {
-        payload: b"stressed".to_vec(),
-    };
+    let client = ServiceClient::new("mirror");
+        .expect("Failed to create client");
 
-    if let Some(response) = client.call("reverse", request, Some(1000)) {
-        println!("Reversed: {}", String::from_utf8_lossy(&response.payload));
-    } else {
-        println!("No response received.");
+    while Ecal::ok() {
+        let request = ServiceRequest {
+            payload: b"stressed".to_vec(),
+        };
+
+        if let Some(response) = client.call("reverse", request, Some(1000)) {
+            println!("Reversed: {}", String::from_utf8_lossy(&response.payload));
+        } else {
+            println!("No response received.");
+        }
+
+        std::thread::sleep(std::time::Duration::from_secs(1));
     }
-
-    Ok(())
+    Ecal::finalize();
 }
 ```
 
