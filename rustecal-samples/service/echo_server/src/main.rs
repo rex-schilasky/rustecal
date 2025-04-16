@@ -1,6 +1,6 @@
 use rustecal::{Ecal, EcalComponents};
 use rustecal::service::server::ServiceServer;
-use rustecal::service::types::{ServiceRequest, ServiceResponse, MethodInfo};
+use rustecal::service::types::{ServiceRequest, ServiceResponse, MethodInfo, ServiceId};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize eCAL
@@ -20,6 +20,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         ServiceResponse {
             success: true,
+            server_id: ServiceId {
+                service_id: unsafe { std::mem::zeroed() }, // Placeholder until response is filled by core
+            },
             payload: req.payload,
             error_msg: None,
         }

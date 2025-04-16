@@ -28,6 +28,19 @@ impl From<i32> for CallState {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct ServiceId {
+    pub service_id: eCAL_SEntityId,
+}
+
+impl ServiceId {
+    pub unsafe fn from_ffi(raw: &eCAL_SServiceId) -> Self {
+        Self {
+            service_id: raw.service_id,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ServiceRequest {
     pub payload: Vec<u8>,
@@ -36,22 +49,16 @@ pub struct ServiceRequest {
 #[derive(Debug, Clone)]
 pub struct ServiceResponse {
     pub success: bool,
+    pub server_id: ServiceId,
     pub error_msg: Option<String>,
     pub payload: Vec<u8>,
 }
 
 impl ServiceResponse {
-    /// Constructs from an `eCAL_SServiceResponse` struct.
-    ///
-    /// ⚠️ This version ignores `response_length` due to known issues in the C API,
-    /// and instead assumes the `response` pointer is a null-terminated string.
-    ///
-    /// ⚠️ This is not safe for binary payloads or strings containing embedded `\0`,
-    /// but avoids crashes due to uninitialized or garbage `response_length` values.
-    ///
-    /// ✅ To support full binary buffers in the future, switch back to using `response_length`.
     pub fn from_struct(response: &eCAL_SServiceResponse) -> Self {
         let success = CallState::from(response.call_state).is_success();
+
+        let server_id = unsafe { ServiceId::from_ffi(&response.server_id) };
 
         let error_msg = if response.error_msg.is_null() {
             None
@@ -73,6 +80,7 @@ impl ServiceResponse {
 
         Self {
             success,
+            server_id,
             error_msg,
             payload,
         }
@@ -82,16 +90,10 @@ impl ServiceResponse {
 /// Metadata passed to method callbacks about the method interface.
 #[derive(Debug, Clone)]
 pub struct MethodInfo {
-    /// Method name (e.g. "add", "multiply").
     pub method_name: String,
-    /// Optional type name of request (e.g. "MyRequest").
     pub request_type: Option<String>,
-    /// Optional type name of response (e.g. "MyResponse").
     pub response_type: Option<String>,
 }
 
-/// Callback type used for handling service method invocations.
-///
-/// This is a boxed Rust function or closure that receives method info and request,
-/// and returns a service response.
+/// The service callback signature used by ServiceServer.
 pub type ServiceCallback = Box<dyn Fn(MethodInfo, ServiceRequest) -> ServiceResponse + Send + Sync + 'static>;

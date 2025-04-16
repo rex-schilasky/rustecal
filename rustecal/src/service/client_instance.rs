@@ -1,4 +1,4 @@
-use crate::service::types::{ServiceRequest, ServiceResponse};
+use crate::service::types::{ServiceId, ServiceRequest, ServiceResponse};
 use rustecal_sys::*;
 use std::ffi::CString;
 use std::os::raw::c_void;
@@ -38,6 +38,9 @@ impl ClientInstance {
         if response_ptr.is_null() {
             return Some(ServiceResponse {
                 success: false,
+                server_id: ServiceId {
+                    service_id: unsafe { std::mem::zeroed() },
+                },
                 error_msg: Some("call failed".into()),
                 payload: vec![],
             });
