@@ -1,6 +1,7 @@
 //! Shared service-related data structures for client and server.
 
 use rustecal_sys::*;
+use std::ffi::CStr;
 
 /// Enum representing the result of a service call.
 #[derive(Debug, Clone, Copy)]
@@ -49,7 +50,17 @@ pub struct ServiceResponse {
 }
 
 impl ServiceResponse {
-    /// Construct from raw FFI pointer to `eCAL_SServiceResponse` (used in client).
+    /// Constructs a `ServiceResponse` from a raw FFI pointer returned by eCAL.
+    ///
+    /// ⚠️ Due to a known issue in the eCAL C API, the `response_length` field of
+    /// `eCAL_SServiceResponse` may be **uninitialized** and contain garbage values,
+    /// even if the `response` pointer is valid and contains a proper string.
+    ///
+    /// To avoid undefined behavior, we **ignore `response_length` entirely** for now
+    /// and fallback to assuming that the response is a null-terminated C string.
+    ///
+    /// When the C API is fixed to reliably populate `response_length`, this function
+    /// should be updated to use a proper byte slice (see commented code below).
     pub unsafe fn from_raw_response(ptr: *mut eCAL_SServiceResponse) -> Self {
         if ptr.is_null() {
             return Self {
@@ -61,23 +72,47 @@ impl ServiceResponse {
 
         let response = unsafe { *ptr };
 
-        let payload = unsafe {
-            std::slice::from_raw_parts(
-                response.response as *const u8,
-                response.response_length,
-            )
-        }
-            .to_vec();
+        // Workaround: use null-terminated parsing only
+        let payload = if response.response.is_null() {
+            vec![]
+        } else {
+            unsafe {
+                CStr::from_ptr(response.response as *const i8)
+                    .to_bytes()
+                    .to_vec()
+            }
+        };
+
+        // ✅ Future-safe version (uncomment when C API bug is resolved)
+        /*
+        let payload = if response.response.is_null() || response.response_length == 0 {
+            vec![]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    response.response as *const u8,
+                    response.response_length,
+                )
+                .to_vec()
+            }
+        };
+        */
 
         let call_state = CallState::from(response.call_state);
 
+        let error_msg = if response.error_msg.is_null() {
+            None
+        } else {
+            Some(unsafe {
+                CStr::from_ptr(response.error_msg)
+                    .to_string_lossy()
+                    .into_owned()
+            })
+        };
+
         Self {
             success: call_state.is_success(),
-            error_msg: if call_state.is_success() {
-                None
-            } else {
-                Some(format!("{call_state:?}"))
-            },
+            error_msg,
             payload,
         }
     }
