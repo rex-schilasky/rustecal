@@ -1,17 +1,15 @@
 use crate::service::client_instance::ClientInstance;
-use crate::service::types::{CallState, ServiceRequest, ServiceResponse};
+use crate::service::types::{ServiceRequest, ServiceResponse};
 use rustecal_sys::*;
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 use std::os::raw::c_void;
 use std::ptr;
 
-/// Represents a high-level service client capable of invoking remote procedures.
 pub struct ServiceClient {
     pub(crate) handle: *mut eCAL_ServiceClient,
 }
 
 impl ServiceClient {
-    /// Creates a new `ServiceClient` for the given service name.
     pub fn new(service_name: &str) -> Result<Self, String> {
         let c_service = CString::new(service_name).map_err(|_| "Invalid service name")?;
         let handle = unsafe { eCAL_ServiceClient_New(c_service.as_ptr(), ptr::null(), 0, None) };
@@ -23,12 +21,10 @@ impl ServiceClient {
         }
     }
 
-    /// Calls a method and returns the first response received from any server.
     pub fn call(&self, method: &str, request: ServiceRequest, timeout_ms: Option<i32>) -> Option<ServiceResponse> {
         self.call_all(method, request, timeout_ms)?.pop()
     }
 
-    /// Calls a method and returns all responses received from available servers.
     pub fn call_all(
         &self,
         method: &str,
@@ -65,26 +61,8 @@ impl ServiceClient {
 
         unsafe {
             for i in 0..response_len {
-                let item = *response_ptr.add(i);
-                let success = CallState::from(item.call_state).is_success();
-
-                let error_msg = if item.error_msg.is_null() {
-                    None
-                } else {
-                    Some(CStr::from_ptr(item.error_msg).to_string_lossy().into_owned())
-                };
-
-                let payload = if item.response.is_null() {
-                    vec![]
-                } else {
-                    CStr::from_ptr(item.response as *const i8).to_bytes().to_vec()
-                };
-
-                responses.push(ServiceResponse {
-                    success,
-                    error_msg,
-                    payload,
-                });
+                let item = &*response_ptr.add(i);
+                responses.push(ServiceResponse::from_struct(item));
             }
 
             eCAL_Free(response_ptr as *mut c_void);
@@ -93,7 +71,6 @@ impl ServiceClient {
         Some(responses)
     }
 
-    /// Returns a list of connected `ClientInstance`s (each one representing a server).
     pub fn get_client_instances(&self) -> Vec<ClientInstance> {
         let mut result = Vec::new();
 

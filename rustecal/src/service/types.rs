@@ -1,9 +1,6 @@
-//! Shared service-related data structures for client and server.
-
 use rustecal_sys::*;
 use std::ffi::CStr;
 
-/// Enum representing the result of a service call.
 #[derive(Debug, Clone, Copy)]
 pub enum CallState {
     None,
@@ -31,48 +28,39 @@ impl From<i32> for CallState {
     }
 }
 
-/// A service request as passed to or received from eCAL service callbacks.
 #[derive(Debug, Clone)]
 pub struct ServiceRequest {
-    /// Raw byte buffer of the serialized request.
     pub payload: Vec<u8>,
 }
 
-/// A service response to return from the service handler.
 #[derive(Debug, Clone)]
 pub struct ServiceResponse {
-    /// Indicates whether the service call was successful.
     pub success: bool,
-    /// Optional error message (usually empty if success = true).
     pub error_msg: Option<String>,
-    /// Raw byte buffer containing the serialized response.
     pub payload: Vec<u8>,
 }
 
 impl ServiceResponse {
-    /// Constructs a `ServiceResponse` from a raw FFI pointer returned by eCAL.
+    /// Constructs from an `eCAL_SServiceResponse` struct.
     ///
-    /// ⚠️ Due to a known issue in the eCAL C API, the `response_length` field of
-    /// `eCAL_SServiceResponse` may be **uninitialized** and contain garbage values,
-    /// even if the `response` pointer is valid and contains a proper string.
+    /// ⚠️ This version ignores `response_length` due to known issues in the C API,
+    /// and instead assumes the `response` pointer is a null-terminated string.
     ///
-    /// To avoid undefined behavior, we **ignore `response_length` entirely** for now
-    /// and fallback to assuming that the response is a null-terminated C string.
+    /// ⚠️ This is not safe for binary payloads or strings containing embedded `\0`,
+    /// but avoids crashes due to uninitialized or garbage `response_length` values.
     ///
-    /// When the C API is fixed to reliably populate `response_length`, this function
-    /// should be updated to use a proper byte slice (see commented code below).
-    pub unsafe fn from_raw_response(ptr: *mut eCAL_SServiceResponse) -> Self {
-        if ptr.is_null() {
-            return Self {
-                success: false,
-                error_msg: Some("null response".into()),
-                payload: vec![],
-            };
-        }
+    /// ✅ To support full binary buffers in the future, switch back to using `response_length`.
+    pub fn from_struct(response: &eCAL_SServiceResponse) -> Self {
+        let success = CallState::from(response.call_state).is_success();
 
-        let response = unsafe { *ptr };
+        let error_msg = if response.error_msg.is_null() {
+            None
+        } else {
+            Some(unsafe {
+                CStr::from_ptr(response.error_msg).to_string_lossy().into_owned()
+            })
+        };
 
-        // Workaround: use null-terminated parsing only
         let payload = if response.response.is_null() {
             vec![]
         } else {
@@ -83,35 +71,8 @@ impl ServiceResponse {
             }
         };
 
-        // ✅ Future-safe version (uncomment when C API bug is resolved)
-        /*
-        let payload = if response.response.is_null() || response.response_length == 0 {
-            vec![]
-        } else {
-            unsafe {
-                std::slice::from_raw_parts(
-                    response.response as *const u8,
-                    response.response_length,
-                )
-                .to_vec()
-            }
-        };
-        */
-
-        let call_state = CallState::from(response.call_state);
-
-        let error_msg = if response.error_msg.is_null() {
-            None
-        } else {
-            Some(unsafe {
-                CStr::from_ptr(response.error_msg)
-                    .to_string_lossy()
-                    .into_owned()
-            })
-        };
-
         Self {
-            success: call_state.is_success(),
+            success,
             error_msg,
             payload,
         }
@@ -134,17 +95,3 @@ pub struct MethodInfo {
 /// This is a boxed Rust function or closure that receives method info and request,
 /// and returns a service response.
 pub type ServiceCallback = Box<dyn Fn(MethodInfo, ServiceRequest) -> ServiceResponse + Send + Sync + 'static>;
-
-/// A unique identifier for a service instance (for matching / addressing).
-#[derive(Debug, Clone, Copy)]
-pub struct ServiceId {
-    pub service_id: eCAL_SEntityId,
-}
-
-impl ServiceId {
-    pub unsafe fn from_ffi(raw: &eCAL_SServiceId) -> Self {
-        Self {
-            service_id: raw.service_id,
-        }
-    }
-}
