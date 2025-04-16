@@ -12,9 +12,12 @@ fn main() {
     while Ecal::ok() {
         cnt += 1;
         let msg = format!("HELLO WORLD FROM RUST ({})", cnt);
+        
         let wrapped = StringMessage(msg);
         publisher.send(&wrapped);
+        
         println!("Sent: {}", wrapped.0);
+        
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
 
