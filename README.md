@@ -111,7 +111,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Documentation
 
-📚 Full user guide: [https://rex-schilasky.github.io/rustecal](https://rex-schilasky.github.io/rustecal)
+Full user guide: [https://rex-schilasky.github.io/rustecal](https://rex-schilasky.github.io/rustecal)
 
 ```bash
 cd docs/
