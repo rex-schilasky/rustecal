@@ -397,22 +397,107 @@ use my_proto::MyProto;
 
 let pub = Publisher::&lt;ProtobufMessage&lt;MyProto&gt;&gt;::builder("proto_topic").create()?;
 <span class="boring">}</span></code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="service-server"><a class="header" href="#service-server">Service Server</a></h1>
+<p>The <code>ServiceServer</code> API allows Rust applications to act as eCAL service providers using a simple, callback-based interface that mirrors the C++ and C APIs.</p>
+<h2 id="registering-methods"><a class="header" href="#registering-methods">Registering Methods</a></h2>
+<p>To provide services, create a <code>ServiceServer</code> and register one or more methods by name:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustecal::service::server::ServiceServer;
+use rustecal::service::types::MethodInfo;
+
+let mut server = ServiceServer::new("mirror")?;
+
+server.add_method("echo", Box::new(|_info: MethodInfo, request: &amp;[u8]| {
+    request.to_vec()
+}))?;
+
+server.add_method("reverse", Box::new(|_info, request| {
+    let mut reversed = request.to_vec();
+    reversed.reverse();
+    reversed
+}))?;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="method-signatures"><a class="header" href="#method-signatures">Method Signatures</a></h2>
+<p>The callback signature follows:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>Fn(MethodInfo, &amp;[u8]) -&gt; Vec&lt;u8&gt;
+<span class="boring">}</span></code></pre></pre>
+<p>This is safe, allocation-free on the input side, and flexible for any binary or textual payloads.</p>
+<h2 id="example-output"><a class="header" href="#example-output">Example Output</a></h2>
+<pre><code>Method   : 'echo' called
+Request  : stressed
+Response : stressed
+
+Method   : 'reverse' called
+Request  : stressed
+Response : desserts
+</code></pre>
+<h2 id="runtime-compatibility"><a class="header" href="#runtime-compatibility">Runtime Compatibility</a></h2>
+<p>This API is fully compatible with the C++ <code>mirror_server.cpp</code> and C <code>mirror_server.c</code> examples.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="service-client"><a class="header" href="#service-client">Service Client</a></h1>
+<p>The <code>ServiceClient</code> API allows a Rust application to call eCAL services, either generically or per-instance.</p>
+<h2 id="connecting-to-a-service"><a class="header" href="#connecting-to-a-service">Connecting to a Service</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustecal::service::client::ServiceClient;
+
+let client = ServiceClient::new("mirror")?;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="calling-methods"><a class="header" href="#calling-methods">Calling Methods</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustecal::service::types::ServiceRequest;
+
+let request = ServiceRequest {
+    payload: b"stressed".to_vec(),
+};
+
+let response = client.call("echo", request, Some(1000));
+<span class="boring">}</span></code></pre></pre>
+<p>To call all connected instances:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>for instance in client.get_client_instances() {
+    let response = instance.call("reverse", request.clone(), Some(1000));
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="return-handling"><a class="header" href="#return-handling">Return Handling</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>match response {
+    Some(res) if res.success =&gt; {
+        println!("Response: {}", String::from_utf8_lossy(&amp;res.payload));
+    }
+    Some(res) =&gt; {
+        println!("Error: {}", res.error_msg.unwrap_or("Unknown error".into()));
+    }
+    None =&gt; {
+        println!("No response or timeout.");
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="runtime-compatibility-1"><a class="header" href="#runtime-compatibility-1">Runtime Compatibility</a></h2>
+<p>This API matches the usage and behavior of <code>mirror_client.cpp</code> in the eCAL C++ samples.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="roadmap"><a class="header" href="#roadmap">Roadmap</a></h1>
 <ul>
 <li><input disabled="" type="checkbox" checked=""/>
 Cross-platform support (Windows, Linux)</li>
 <li><input disabled="" type="checkbox" checked=""/>
-Safe API for initialization, shutdown, and pub/sub</li>
+Safe API for initialization, shutdown</li>
 <li><input disabled="" type="checkbox" checked=""/>
-Typed pub/sub APIs</li>
+Binary publish/subscribe API</li>
+<li><input disabled="" type="checkbox" checked=""/>
+Typed publish/subscribe API</li>
 <li><input disabled="" type="checkbox" checked=""/>
 Modular type crates (string, bytes, protobuf)</li>
 <li><input disabled="" type="checkbox" checked=""/>
-Examples for all supported types</li>
+Binary server/client API</li>
+<li><input disabled="" type="checkbox" checked=""/>
+Examples for all publish/subscribe and client/server</li>
 <li><input disabled="" type="checkbox"/>
 Protobuf descriptor introspection</li>
-<li><input disabled="" type="checkbox"/>
-eCAL Services (RPC-style)</li>
 <li><input disabled="" type="checkbox"/>
 Monitoring and logging support</li>
 </ul>
