@@ -1,7 +1,6 @@
 //! Common eCAL types shared across pubsub and service layers.
 
-use rustecal_sys::*;
-use std::ffi::{CStr};
+use std::ffi::CStr;
 use std::os::raw::c_char;
 
 /// Represents a globally unique entity in eCAL.
@@ -12,8 +11,8 @@ pub struct EntityId {
     pub host_name: String,
 }
 
-impl From<eCAL_SEntityId> for EntityId {
-    fn from(raw: eCAL_SEntityId) -> Self {
+impl From<rustecal_sys::eCAL_SEntityId> for EntityId {
+    fn from(raw: rustecal_sys::eCAL_SEntityId) -> Self {
         Self {
             entity_id: raw.entity_id,
             process_id: raw.process_id,
@@ -30,8 +29,8 @@ pub struct DataTypeInfo {
     pub descriptor: Vec<u8>,
 }
 
-impl From<eCAL_SDataTypeInformation> for DataTypeInfo {
-    fn from(info: eCAL_SDataTypeInformation) -> Self {
+impl From<rustecal_sys::eCAL_SDataTypeInformation> for DataTypeInfo {
+    fn from(info: rustecal_sys::eCAL_SDataTypeInformation) -> Self {
         let type_name = cstr_to_string(info.name);
         let encoding = cstr_to_string(info.encoding);
         let descriptor = if info.descriptor.is_null() || info.descriptor_length == 0 {
@@ -59,8 +58,8 @@ pub struct Version {
     pub patch: i32,
 }
 
-impl From<eCAL_SVersion> for Version {
-    fn from(raw: eCAL_SVersion) -> Self {
+impl From<rustecal_sys::eCAL_SVersion> for Version {
+    fn from(raw: rustecal_sys::eCAL_SVersion) -> Self {
         Self {
             major: raw.major,
             minor: raw.minor,
