@@ -1,8 +1,8 @@
 [package]
 name = "hello_receive"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
-rustecal = { path = "../../../rustecal" }
+rustecal = { path = "../../../rustecal", features = ["pubsub"] }
 rustecal-types-string = { path = "../../../rustecal-types-string" }

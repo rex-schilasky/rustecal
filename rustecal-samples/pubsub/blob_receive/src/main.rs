@@ -1,6 +1,6 @@
 use rustecal::{Ecal, EcalComponents, TypedSubscriber};
-use rustecal_types_bytes::BytesMessage;
 use rustecal::pubsub::typed_subscriber::Received;
+use rustecal_types_bytes::BytesMessage;
 
 fn main() {
     Ecal::initialize(Some("blob receive rust"), EcalComponents::DEFAULT)

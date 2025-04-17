@@ -7,8 +7,9 @@
 //! [`PublisherMessage`] and [`SubscriberMessage`] for type-safe usage with
 //! [`TypedPublisher`] and [`TypedSubscriber`] respectively.
 
-use rustecal::{PublisherMessage, SubscriberMessage};
-use rustecal::ecal::types::DataTypeInfo;
+use rustecal_core::types::DataTypeInfo;
+use rustecal_pubsub::typed_publisher::PublisherMessage;
+use rustecal_pubsub::typed_subscriber::SubscriberMessage;
 use std::str;
 
 /// A wrapper for UTF-8 string messages used with typed eCAL pub/sub.

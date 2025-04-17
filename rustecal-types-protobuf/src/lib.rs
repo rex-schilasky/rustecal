@@ -18,8 +18,9 @@
 //! ```
 
 use prost::Message;
-use rustecal::pubsub::{PublisherMessage, SubscriberMessage};
-use rustecal::ecal::types::DataTypeInfo;
+use rustecal_core::types::DataTypeInfo;
+use rustecal_pubsub::typed_publisher::PublisherMessage;
+use rustecal_pubsub::typed_subscriber::SubscriberMessage;
 
 /// Marker trait to opt-in a Protobuf type for use with eCAL.
 ///

@@ -1,6 +1,9 @@
 [workspace]
 members = [
     "rustecal",
+    "rustecal-core",
+    "rustecal-pubsub",
+    "rustecal-service",
     "rustecal-sys",
     "rustecal-types-bytes",
     "rustecal-types-protobuf",

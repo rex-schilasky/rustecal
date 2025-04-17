@@ -1,6 +1,6 @@
 use rustecal::{Ecal, EcalComponents, TypedSubscriber};
-use rustecal_types_string::StringMessage;
 use rustecal::pubsub::typed_subscriber::Received;
+use rustecal_types_string::StringMessage;
 
 fn main() {
     Ecal::initialize(Some("hello receive rust"), EcalComponents::DEFAULT)

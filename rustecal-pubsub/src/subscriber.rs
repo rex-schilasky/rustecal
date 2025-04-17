@@ -1,8 +1,9 @@
 use rustecal_sys::*;
-use crate::ecal::types::DataTypeInfo;
-use crate::pubsub::types::TopicId;
-use std::ffi::{CString, CStr, c_void};
+use rustecal_core::types::DataTypeInfo;
+use crate::types::TopicId;
+use std::ffi::{CStr, CString};
 use std::ptr;
+use std::ffi::c_void;
 
 /// A safe and ergonomic wrapper around the eCAL C subscriber API.
 ///

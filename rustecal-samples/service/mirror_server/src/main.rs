@@ -1,6 +1,5 @@
 use rustecal::{Ecal, EcalComponents};
-use rustecal::service::server::ServiceServer;
-use rustecal::service::types::MethodInfo;
+use rustecal::{ServiceServer, MethodInfo};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize eCAL

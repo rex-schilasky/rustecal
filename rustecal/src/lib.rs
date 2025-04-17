@@ -1,47 +1,44 @@
-//! # rustecal
-//!
-//! Safe and idiomatic bindings for the [Eclipse eCAL](https://github.com/eclipse-ecal/ecal) middleware.
-//!
-//! ## Features
-//! - High-performance publish/subscribe communication
-//! - Strongly typed messaging (`StringMessage`, `BytesMessage`, `ProtobufMessage<T>`)
-//! - Safe wrappers around the eCAL C API
-//! - Extensible through message type crates
-//!
-//! ## Crate Layout
-//! - [`Ecal`] – Initialization and shutdown
-//! - [`TypedPublisher`] – High-level publishing
-//! - [`TypedSubscriber`] – High-level subscribing
-//!
-//! ## Examples
-//! ```no_run
-//! use rustecal::{Ecal, EcalComponents};
-//! use rustecal_types_string::StringMessage;
-//! use rustecal::TypedPublisher;
-//!
-//! fn main() {
-//!     Ecal::initialize(Some("example pub"), EcalComponents::DEFAULT).unwrap();
-//!     let pub_ = TypedPublisher::<StringMessage>::new("hello").unwrap();
-//!     pub_.send(&StringMessage("Hello from Rust".into()));
-//!     Ecal::finalize();
-//! }
-//! ```
+//! rustecal: all‑in‑one eCAL bindings
 
-pub mod pubsub;
-pub mod ecal;
+// —————————————————————————————————————————————————————————————————————————————
+// Core initialization & types (always available)
+pub use rustecal_core::{Ecal, EcalComponents};
 
-pub use ecal::core::Ecal;
-pub use ecal::components::EcalComponents;
+// —————————————————————————————————————————————————————————————————————————————
+// Pub/Sub API (requires the `pubsub` feature)
+#[cfg(feature = "pubsub")]
+pub mod pubsub {
+    //! Typed and untyped Publisher/Subscriber
+    pub use rustecal_pubsub::*;
+}
 
-pub use pubsub::{
-    TypedSubscriber,
-    SubscriberMessage,
-    TypedPublisher,
-    PublisherMessage,
+#[cfg(feature = "pubsub")]
+pub use rustecal_pubsub::{
+    // low‑level handles
+    Publisher, Subscriber,
+    // typed wrappers
+    TypedPublisher, PublisherMessage,
+    TypedSubscriber, SubscriberMessage,
 };
 
-// Optional if needed by demos:
-pub use pubsub::publisher::Publisher;
-pub use pubsub::subscriber::Subscriber;
-// Service module
-pub mod service;
+// —————————————————————————————————————————————————————————————————————————————
+// Service RPC API (requires the `service` feature)
+#[cfg(feature = "service")]
+pub mod service {
+    //! RPC server & client, plus shared types
+    pub use rustecal_service::*;
+}
+
+#[cfg(feature = "service")]
+pub use rustecal_service::{
+    // server & client entrypoints
+    ServiceServer, ServiceClient, ClientInstance,
+    // request/response types
+    ServiceRequest, ServiceResponse,
+};
+
+#[cfg(feature = "service")]
+pub use rustecal_service::types::{
+    // metadata & callback signature
+    MethodInfo, ServiceCallback, CallState,
+};

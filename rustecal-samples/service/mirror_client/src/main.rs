@@ -1,5 +1,5 @@
 use rustecal::{Ecal, EcalComponents};
-use rustecal::service::client::ServiceClient;
+use rustecal::{ServiceClient, ServiceRequest, CallState};
 use std::thread;
 use std::time::Duration;
 
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let method_name = methods[i % methods.len()];
         i += 1;
 
-        let request = rustecal::service::types::ServiceRequest {
+        let request = ServiceRequest {
             payload: b"stressed".to_vec(),
         };
 
@@ -35,15 +35,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             match response {
                 Some(res) => {
-                    match rustecal::service::types::CallState::from(res.success as i32) {
-                        rustecal::service::types::CallState::Executed => {
+                    match CallState::from(res.success as i32) {
+                        CallState::Executed => {
                             let text = String::from_utf8_lossy(&res.payload);
                             println!(
                                 "Received response: {} from service id {:?}",
                                 text, res.server_id.service_id.entity_id
                             );
                         }
-                        rustecal::service::types::CallState::Failed => {
+                        CallState::Failed => {
                             println!(
                                 "Received error: {} from service id {:?}",
                                 res.error_msg.unwrap_or_else(|| "Unknown".into()),

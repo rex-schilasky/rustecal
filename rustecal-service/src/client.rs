@@ -1,7 +1,7 @@
-use crate::service::client_instance::ClientInstance;
-use crate::service::types::{ServiceRequest};
-use crate::service::response::ServiceResponse;
 use rustecal_sys::*;
+use crate::client_instance::ClientInstance;
+use crate::types::ServiceRequest;
+use crate::response::ServiceResponse;
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::ptr;
