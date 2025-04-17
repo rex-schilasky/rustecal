@@ -111,7 +111,7 @@ fn main() {
     Ecal::initialize(Some("mirror client"), EcalComponents::DEFAULT)
         .expect("eCAL initialization failed");
 
-    let client = ServiceClient::new("mirror");
+    let client = ServiceClient::new("mirror")
         .expect("Failed to create client");
 
     while Ecal::ok() {
