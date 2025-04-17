@@ -1,6 +1,5 @@
 use rustecal::{Ecal, EcalComponents};
-use rustecal::service::client::ServiceClient;
-use rustecal::service::types::ServiceRequest;
+use rustecal::{ServiceClient, ServiceRequest};
 use std::thread;
 use std::time::Duration;
 

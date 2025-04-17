@@ -1,6 +1,6 @@
 use rustecal_sys::*;
-use crate::ecal::types::DataTypeInfo;
-use crate::pubsub::types::TopicId;
+use rustecal_core::types::DataTypeInfo;
+use crate::types::TopicId;
 use std::ffi::{CStr, CString};
 use std::ptr;
 

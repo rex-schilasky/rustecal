@@ -1,8 +1,9 @@
 [package]
 name = "blob_receive"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
-rustecal = { path = "../../../rustecal" }
+rustecal = { path = "../../../rustecal", features = ["pubsub"] }
+rustecal-pubsub = { path = "../../../rustecal-pubsub" }
 rustecal-types-bytes = { path = "../../../rustecal-types-bytes" }

@@ -12,7 +12,7 @@
 //! application and [`Ecal::finalize`] at shutdown.
 
 use std::ffi::CString;
-use crate::ecal::components::EcalComponents;
+use crate::components::EcalComponents;
 use rustecal_sys;
 
 /// Provides access to the core initialization and finalization functions of eCAL.

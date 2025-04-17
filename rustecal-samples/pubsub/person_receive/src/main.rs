@@ -9,7 +9,7 @@ mod environment {
 }
 
 use rustecal::{Ecal, EcalComponents, TypedSubscriber};
-use rustecal::pubsub::typed_subscriber::Received;
+use rustecal_pubsub::typed_subscriber::Received;
 use rustecal_types_protobuf::{ProtobufMessage, IsProtobufType};
 
 use people::Person;

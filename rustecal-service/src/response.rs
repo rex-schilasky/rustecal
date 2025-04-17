@@ -1,5 +1,5 @@
-use crate::service::types::{CallState, ServiceId};
 use rustecal_sys::*;
+use crate::types::{CallState, ServiceId};
 use std::ffi::CStr;
 
 /// Represents a structured response to a service request,

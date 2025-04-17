@@ -1,5 +1,5 @@
-use crate::service::types::{MethodInfo, ServiceCallback};
 use rustecal_sys::*;
+use crate::types::{MethodInfo, ServiceCallback};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_int, c_void};

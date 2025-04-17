@@ -1,6 +1,6 @@
-use crate::pubsub::publisher::Publisher;
-use crate::ecal::types::DataTypeInfo;
-use crate::pubsub::types::TopicId;
+use crate::publisher::Publisher;
+use rustecal_core::types::DataTypeInfo;
+use crate::types::TopicId;
 use std::marker::PhantomData;
 
 /// Trait for types that can be published via [`TypedPublisher`].
