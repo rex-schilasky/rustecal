@@ -7,7 +7,6 @@ build = "build.rs"
 [dependencies]
 prost = "0.13.5"
 rustecal = { path = "../../../rustecal", features = ["pubsub"] }
-rustecal-pubsub = { path = "../../../rustecal-pubsub" }
 rustecal-types-protobuf = { path = "../../../rustecal-types-protobuf" }
 
 [build-dependencies]
