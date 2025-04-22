@@ -28,7 +28,7 @@ jobs:
         run: mdbook build docs
 
       - name: Build Rust API Docs (with --no-run)
-        run: cargo doc --workspace --no-deps --all-features -- --no-run
+        run: cargo doc --workspace --no-deps --all-features -- -Z unstable-options --no-run
 
       - name: Copy Rust API Docs into mdBook output
         run: cp -r target/doc ./docs/book/api
