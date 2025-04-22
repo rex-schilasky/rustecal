@@ -13,12 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-
       - name: Install mdBook
         uses: taiki-e/install-action@v2
         with:
@@ -26,12 +20,6 @@ jobs:
 
       - name: Build mdBook
         run: mdbook build docs
-
-      - name: Build Rust API Docs (with --no-run)
-        run: cargo doc --workspace --no-deps --all-features -- -Z unstable-options --no-run
-
-      - name: Copy Rust API Docs into mdBook output
-        run: cp -r target/doc ./docs/book/api
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
