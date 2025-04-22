@@ -162,14 +162,19 @@ use rustecal_types_bytes::BytesMessage;
 
 fn main() {
     Ecal::initialize(Some("blob publisher"), EcalComponents::DEFAULT).unwrap();
+
     let pub_ = TypedPublisher::&lt;BytesMessage&gt;::new("blob").unwrap();
+
     let mut counter = 0u8;
     while Ecal::ok() {
         let buf = vec![counter; 1024];
         pub_.send(&amp;BytesMessage(buf));
+
         counter = counter.wrapping_add(1);
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+
+    Ecal::finalize();
 }</code></pre></pre>
 <h2 id="subscriber"><a class="header" href="#subscriber">Subscriber</a></h2>
 <pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents, TypedSubscriber};
@@ -177,13 +182,17 @@ use rustecal_types_bytes::BytesMessage;
 
 fn main() {
     Ecal::initialize(Some("blob subscriber"), EcalComponents::DEFAULT).unwrap();
+
     let mut sub = TypedSubscriber::&lt;BytesMessage&gt;::new("blob").unwrap();
     sub.set_callback(|msg| {
         println!("Received blob of {} bytes", msg.msg.0.len());
     });
+
     while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+
+    Ecal::finalize();
 }</code></pre></pre>
 
                     </main>

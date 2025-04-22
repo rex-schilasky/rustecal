@@ -166,12 +166,17 @@ impl IsProtobufType for Person {}
 
 fn main() {
     Ecal::initialize(Some("protobuf publisher"), EcalComponents::DEFAULT).unwrap();
+
     let pub_ = TypedPublisher::&lt;ProtobufMessage&lt;Person&gt;&gt;::new("person").unwrap();
+
     while Ecal::ok() {
         let person = Person { id: 1, name: "Alice".into(), ..Default::default() };
         pub_.send(&amp;ProtobufMessage(person));
+
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+
+    Ecal::finalize();
 }</code></pre></pre>
 <h2 id="subscriber"><a class="header" href="#subscriber">Subscriber</a></h2>
 <pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents, TypedSubscriber};
@@ -181,11 +186,15 @@ use person::Person;
 
 fn main() {
     Ecal::initialize(Some("protobuf subscriber"), EcalComponents::DEFAULT).unwrap();
+
     let mut sub = TypedSubscriber::&lt;ProtobufMessage&lt;Person&gt;&gt;::new("person").unwrap();
     sub.set_callback(|msg| println!("Received person: {}", msg.msg.0.name));
+
     while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+
+    Ecal::finalize();
 }</code></pre></pre>
 
                     </main>
