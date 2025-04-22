@@ -308,12 +308,17 @@ use rustecal_types_string::StringMessage;
 
 fn main() {
     Ecal::initialize(Some("string publisher"), EcalComponents::DEFAULT).unwrap();
+
     let publisher = TypedPublisher::&lt;StringMessage&gt;::new("hello").unwrap();
+
     while Ecal::ok() {
         let msg = StringMessage(format!("Hello from Rust"));
         publisher.send(&amp;msg);
+
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+
+    Ecal::finalize();
 }</code></pre></pre>
 <h2 id="subscriber-1"><a class="header" href="#subscriber-1">Subscriber</a></h2>
 <pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents, TypedSubscriber};
@@ -321,11 +326,15 @@ use rustecal_types_string::StringMessage;
 
 fn main() {
     Ecal::initialize(Some("string subscriber"), EcalComponents::DEFAULT).unwrap();
+
     let mut sub = TypedSubscriber::&lt;StringMessage&gt;::new("hello").unwrap();
     sub.set_callback(|msg| println!("Received: {}", msg.msg.0));
+
     while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+
+    Ecal::finalize();
 }</code></pre></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="protobuf-message-example"><a class="header" href="#protobuf-message-example">Protobuf Message Example</a></h1>
 <h2 id="publisher-2"><a class="header" href="#publisher-2">Publisher</a></h2>

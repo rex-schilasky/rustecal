@@ -162,12 +162,17 @@ use rustecal_types_string::StringMessage;
 
 fn main() {
     Ecal::initialize(Some("string publisher"), EcalComponents::DEFAULT).unwrap();
+
     let publisher = TypedPublisher::&lt;StringMessage&gt;::new("hello").unwrap();
+
     while Ecal::ok() {
         let msg = StringMessage(format!("Hello from Rust"));
         publisher.send(&amp;msg);
+
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+
+    Ecal::finalize();
 }</code></pre></pre>
 <h2 id="subscriber"><a class="header" href="#subscriber">Subscriber</a></h2>
 <pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents, TypedSubscriber};
@@ -175,11 +180,15 @@ use rustecal_types_string::StringMessage;
 
 fn main() {
     Ecal::initialize(Some("string subscriber"), EcalComponents::DEFAULT).unwrap();
+
     let mut sub = TypedSubscriber::&lt;StringMessage&gt;::new("hello").unwrap();
     sub.set_callback(|msg| println!("Received: {}", msg.msg.0));
+
     while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+
+    Ecal::finalize();
 }</code></pre></pre>
 
                     </main>
