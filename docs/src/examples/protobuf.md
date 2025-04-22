@@ -13,7 +13,7 @@ impl IsProtobufType for Person {}
 fn main() {
     Ecal::initialize(Some("protobuf publisher"), EcalComponents::DEFAULT).unwrap();
     let pub_ = TypedPublisher::<ProtobufMessage<Person>>::new("person").unwrap();
-    loop {
+    while Ecal::ok() {
         let person = Person { id: 1, name: "Alice".into(), ..Default::default() };
         pub_.send(&ProtobufMessage(person));
         std::thread::sleep(std::time::Duration::from_millis(500));

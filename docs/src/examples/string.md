@@ -9,7 +9,7 @@ use rustecal_types_string::StringMessage;
 fn main() {
     Ecal::initialize(Some("string publisher"), EcalComponents::DEFAULT).unwrap();
     let publisher = TypedPublisher::<StringMessage>::new("hello").unwrap();
-    loop {
+    while Ecal::ok() {
         let msg = StringMessage(format!("Hello from Rust"));
         publisher.send(&msg);
         std::thread::sleep(std::time::Duration::from_millis(500));

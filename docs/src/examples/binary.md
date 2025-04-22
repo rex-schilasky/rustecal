@@ -10,7 +10,7 @@ fn main() {
     Ecal::initialize(Some("blob publisher"), EcalComponents::DEFAULT).unwrap();
     let pub_ = TypedPublisher::<BytesMessage>::new("blob").unwrap();
     let mut counter = 0u8;
-    loop {
+    while Ecal::ok() {
         let buf = vec![counter; 1024];
         pub_.send(&BytesMessage(buf));
         counter = counter.wrapping_add(1);
