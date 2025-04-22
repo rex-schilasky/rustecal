@@ -12,12 +12,17 @@ impl IsProtobufType for Person {}
 
 fn main() {
     Ecal::initialize(Some("protobuf publisher"), EcalComponents::DEFAULT).unwrap();
+
     let pub_ = TypedPublisher::<ProtobufMessage<Person>>::new("person").unwrap();
+
     while Ecal::ok() {
         let person = Person { id: 1, name: "Alice".into(), ..Default::default() };
         pub_.send(&ProtobufMessage(person));
+
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+
+    Ecal::finalize();
 }
 ```
 
@@ -31,10 +36,14 @@ use person::Person;
 
 fn main() {
     Ecal::initialize(Some("protobuf subscriber"), EcalComponents::DEFAULT).unwrap();
+
     let mut sub = TypedSubscriber::<ProtobufMessage<Person>>::new("person").unwrap();
     sub.set_callback(|msg| println!("Received person: {}", msg.msg.0.name));
+
     while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+
+    Ecal::finalize();
 }
 ```
