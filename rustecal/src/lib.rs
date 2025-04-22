@@ -1,4 +1,26 @@
-//! rustecal: all‑in‑one eCAL bindings
+//! # rustecal
+//!
+//! High-level entry point for Rust bindings to the [eCAL](https://github.com/eclipse-ecal/ecal) middleware.
+//! Re-exports core pub/sub and service modules for user convenience.
+//!
+//! ## Modules
+//! - `core`: Initialization and runtime management.
+//! - `pubsub`: Typed publishers and subscribers.
+//! - `service`: Synchronous RPC communication.
+//!
+//! ## Example
+//! ```rust
+//! use rustecal::{Ecal, TypedPublisher};
+//! use rustecal_types_string::StringMessage;
+//!
+//! fn main() {
+//!     Ecal::initialize(Some("example node"), Default::default()).unwrap();
+//!     let pub_ = TypedPublisher::<StringMessage>::new("example_topic").unwrap();
+//!     pub_.send(&StringMessage("Hello!".into()));
+//! }
+//! ```
+//!
+
 
 // —————————————————————————————————————————————————————————————————————————————
 // Core initialization & types (always available)

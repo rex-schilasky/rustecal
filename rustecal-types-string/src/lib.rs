@@ -1,11 +1,12 @@
 //! # rustecal-types-string
 //!
-//! This crate provides support for sending and receiving UTF-8 string messages
-//! using the `rustecal` typed publisher and subscriber APIs.
+//! Provides support for sending and receiving `String` messages with rustecal.
 //!
-//! It defines a wrapper type [`StringMessage`] that implements the necessary traits
-//! [`PublisherMessage`] and [`SubscriberMessage`] for type-safe usage with
-//! [`TypedPublisher`] and [`TypedSubscriber`] respectively.
+//! ## Example
+//! ```rust
+//! use rustecal_types_string::StringMessage;
+//! let msg = StringMessage("Hello World".into());
+//! ```
 
 use rustecal_core::types::DataTypeInfo;
 use rustecal_pubsub::typed_publisher::PublisherMessage;

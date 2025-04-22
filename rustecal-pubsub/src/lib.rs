@@ -1,4 +1,17 @@
-//! rustecal-pubsub: TypedPublisher & TypedSubscriber for eCAL
+//! # rustecal-pubsub
+//!
+//! Implements high-performance typed publish/subscribe communication over eCAL.
+//!
+//! ## Features
+//! - Zero-copy shared memory support.
+//! - Strongly-typed publishers and subscribers.
+//! - Topic introspection and metadata.
+//!
+//! ## Key Types
+//! - `TypedPublisher<T>`
+//! - `TypedSubscriber<T>`
+//! - Supported types: `StringMessage`, `BytesMessage`, `ProtobufMessage<T>`
+
 
 // Re-export core init & types
 pub use rustecal_core::{Ecal, EcalComponents};

@@ -1,3 +1,10 @@
+//! # rustecal-sys
+//!
+//! Raw FFI bindings to the eCAL C API.
+//!
+//! This crate is not intended for direct use, but underpins the safe abstractions
+//! provided in `rustecal-core`, `rustecal-pubsub`, and `rustecal-service`.
+
 // src/lib.rs
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]

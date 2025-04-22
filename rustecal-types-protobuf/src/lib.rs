@@ -1,20 +1,15 @@
-//! Typed Protobuf message support for `rustecal`.
+//! # rustecal-types-protobuf
 //!
-//! This crate provides a wrapper around `prost::Message`-based types, allowing
-//! seamless integration with `TypedPublisher` and `TypedSubscriber` from the `rustecal` API.
+//! Provides support for Protobuf message serialization with rustecal.
 //!
-//! ## Usage
+//! ## Features
+//! - Wraps `prost`-based Protobuf types for eCAL transport.
+//! - Static descriptor embedding via `include_bytes!`.
 //!
-//! To publish or subscribe to Protobuf messages, wrap your message type in `ProtobufMessage<T>`
-//! and ensure the inner type implements both `prost::Message` and `IsProtobufType`.
-//!
+//! ## Example
 //! ```rust
-//! use rustecal_types_protobuf::{ProtobufMessage, IsProtobufType};
-//! use my_proto::MyMessage;
-//!
-//! impl IsProtobufType for MyMessage {}
-//!
-//! let msg = ProtobufMessage(MyMessage::default());
+//! use rustecal_types_protobuf::ProtobufMessage;
+//! let msg = ProtobufMessage(MyProstType { ... });
 //! ```
 
 use prost::Message;

@@ -1,7 +1,13 @@
-//! rustecal-core: eCAL initialization, shared components, logging, and core types.
+//! # rustecal-core
 //!
-//! This crate provides safe Rust wrappers for the core system of eCAL,
-//! including runtime lifecycle management, logging, and reusable data structures.
+//! Provides core functionality for managing the eCAL runtime environment.
+//!
+//! Includes:
+//! - Initialization (`Ecal::initialize`)
+//! - Finalization (`Ecal::finalize`)
+//! - System status queries and component management.
+//!
+//! This crate is typically re-exported by the `rustecal` crate.
 
 pub mod core;
 pub mod components;

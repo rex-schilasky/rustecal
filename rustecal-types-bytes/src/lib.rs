@@ -1,8 +1,12 @@
-//! `rustecal-types-bytes` provides typed support for raw byte messages over eCAL.
+//! # rustecal-types-bytes
 //!
-//! This crate defines a wrapper type `BytesMessage` that implements the
-//! [`PublisherMessage`] and [`SubscriberMessage`] traits from the `rustecal` crate,
-//! enabling ergonomic and type-safe publishing and subscribing of binary blobs.
+//! Provides support for sending and receiving raw binary messages (`Vec<u8>`) with rustecal.
+//!
+//! ## Example
+//! ```rust
+//! use rustecal_types_bytes::BytesMessage;
+//! let msg = BytesMessage(vec![1, 2, 3, 4]);
+//! ```
 
 use rustecal_core::types::DataTypeInfo;
 use rustecal_pubsub::typed_publisher::PublisherMessage;
