@@ -167,7 +167,7 @@ impl IsProtobufType for Person {}
 fn main() {
     Ecal::initialize(Some("protobuf publisher"), EcalComponents::DEFAULT).unwrap();
     let pub_ = TypedPublisher::&lt;ProtobufMessage&lt;Person&gt;&gt;::new("person").unwrap();
-    loop {
+    while Ecal::ok() {
         let person = Person { id: 1, name: "Alice".into(), ..Default::default() };
         pub_.send(&amp;ProtobufMessage(person));
         std::thread::sleep(std::time::Duration::from_millis(500));
@@ -196,7 +196,7 @@ fn main() {
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../api/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../examples/service_server.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -210,7 +210,7 @@ fn main() {
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../api/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../examples/service_server.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

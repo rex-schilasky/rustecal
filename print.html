@@ -251,6 +251,17 @@
 <p>Each type is provided via a dedicated crate to avoid pulling unnecessary dependencies.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="examples"><a class="header" href="#examples">Examples</a></h1>
 <p>Code samples for using rustecal.</p>
+<h2 id="publish--subscribe"><a class="header" href="#publish--subscribe">Publish / Subscribe</a></h2>
+<ul>
+<li><a href="examples/string.html">String Messages</a></li>
+<li><a href="examples/binary.html">Binary Messages</a></li>
+<li><a href="examples/protobuf.html">Protobuf Messages</a></li>
+</ul>
+<h2 id="service-client--server"><a class="header" href="#service-client--server">Service Client / Server</a></h2>
+<ul>
+<li><a href="examples/service_server.html">Mirror Server</a></li>
+<li><a href="examples/service_client.html">Mirror Client</a></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="binary-message-example"><a class="header" href="#binary-message-example">Binary Message Example</a></h1>
 <h2 id="publisher"><a class="header" href="#publisher">Publisher</a></h2>
 <pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents, TypedPublisher};
@@ -260,7 +271,7 @@ fn main() {
     Ecal::initialize(Some("blob publisher"), EcalComponents::DEFAULT).unwrap();
     let pub_ = TypedPublisher::&lt;BytesMessage&gt;::new("blob").unwrap();
     let mut counter = 0u8;
-    loop {
+    while Ecal::ok() {
         let buf = vec![counter; 1024];
         pub_.send(&amp;BytesMessage(buf));
         counter = counter.wrapping_add(1);
@@ -289,7 +300,7 @@ use rustecal_types_string::StringMessage;
 fn main() {
     Ecal::initialize(Some("string publisher"), EcalComponents::DEFAULT).unwrap();
     let publisher = TypedPublisher::&lt;StringMessage&gt;::new("hello").unwrap();
-    loop {
+    while Ecal::ok() {
         let msg = StringMessage(format!("Hello from Rust"));
         publisher.send(&amp;msg);
         std::thread::sleep(std::time::Duration::from_millis(500));
@@ -319,7 +330,7 @@ impl IsProtobufType for Person {}
 fn main() {
     Ecal::initialize(Some("protobuf publisher"), EcalComponents::DEFAULT).unwrap();
     let pub_ = TypedPublisher::&lt;ProtobufMessage&lt;Person&gt;&gt;::new("person").unwrap();
-    loop {
+    while Ecal::ok() {
         let person = Person { id: 1, name: "Alice".into(), ..Default::default() };
         pub_.send(&amp;ProtobufMessage(person));
         std::thread::sleep(std::time::Duration::from_millis(500));
@@ -338,6 +349,56 @@ fn main() {
     while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+}</code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="service-server-example"><a class="header" href="#service-server-example">Service Server Example</a></h1>
+<p>This example shows how to implement a basic <strong>Mirror Service Server</strong> using <code>rustecal</code>.</p>
+<p>The server receives a request, logs it, and sends it back as a response.</p>
+<h2 id="example-code"><a class="header" href="#example-code">Example Code</a></h2>
+<pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents};
+use rustecal_service::{ServiceServer, ReceivedRequest};
+
+fn main() {
+    Ecal::initialize(Some("mirror_server"), EcalComponents::DEFAULT).unwrap();
+
+    let _server = ServiceServer::new("mirror_service", move |req: ReceivedRequest| {
+        let request_str = String::from_utf8_lossy(req.request());
+        println!("Received request: {}", request_str);
+
+        // Respond with the same data
+        req.respond(req.request());
+    }).expect("Failed to create service server");
+
+    // Keep the server running
+    while Ecal::ok() {
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+
+    Ecal::finalize();
+}</code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="service-client-example"><a class="header" href="#service-client-example">Service Client Example</a></h1>
+<p>This example demonstrates how to call a <strong>Mirror Service</strong> using <code>rustecal</code>.</p>
+<h2 id="example-code-1"><a class="header" href="#example-code-1">Example Code</a></h2>
+<pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents};
+use rustecal_service::ServiceClient;
+
+fn main() {
+    Ecal::initialize(Some("mirror_client"), EcalComponents::DEFAULT).unwrap();
+
+    let client = ServiceClient::new("mirror_service").unwrap();
+
+    let request_data = b"Hello, Service!";
+    let timeout = std::time::Duration::from_millis(500);
+
+    while Ecal::ok() {
+        if let Some(response) = client.call(request_data, timeout) {
+            println!("Received response: {:?}", String::from_utf8_lossy(&amp;response));
+        } else {
+            println!("Service call timed out.");
+        }
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+
+    Ecal::finalize();
 }</code></pre></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="api-documentation"><a class="header" href="#api-documentation">API Documentation</a></h1>
 <p>Welcome to the <code>rustecal</code> API documentation. This section provides an overview of the main types and traits used to interact with the eCAL communication system through safe and idiomatic Rust APIs.</p>

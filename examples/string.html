@@ -163,7 +163,7 @@ use rustecal_types_string::StringMessage;
 fn main() {
     Ecal::initialize(Some("string publisher"), EcalComponents::DEFAULT).unwrap();
     let publisher = TypedPublisher::&lt;StringMessage&gt;::new("hello").unwrap();
-    loop {
+    while Ecal::ok() {
         let msg = StringMessage(format!("Hello from Rust"));
         publisher.send(&amp;msg);
         std::thread::sleep(std::time::Duration::from_millis(500));
