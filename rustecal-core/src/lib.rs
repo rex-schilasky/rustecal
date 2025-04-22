@@ -16,6 +16,7 @@ pub mod types;
 pub mod log;
 pub mod log_level;
 pub mod core_types;
+pub mod monitoring;
 
 // Re‑exports for ergonomic access:
 pub use core::Ecal;

@@ -8,6 +8,8 @@ members = [
     "rustecal-types-bytes",
     "rustecal-types-protobuf",
     "rustecal-types-string",
+    "rustecal-samples/monitoring/logging_receive",
+    "rustecal-samples/monitoring/monitoring_receive",
     "rustecal-samples/pubsub/blob_send",
     "rustecal-samples/pubsub/blob_receive",
     "rustecal-samples/pubsub/hello_send",

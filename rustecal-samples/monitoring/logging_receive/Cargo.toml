@@ -1,0 +1,8 @@
+[package]
+name = "logging_receive"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rustecal = { path = "../../../rustecal"}
+rustecal-core = { path = "../../../rustecal-core" }

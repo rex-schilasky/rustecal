@@ -3,8 +3,11 @@
 //! This module wraps the C API `eCAL_Monitoring_GetMonitoring` and provides
 //! a safe Rust API to access a snapshot of the middleware's state.
 
-use crate::core_types::monitoring::{MonitoringSnapshot, ProcessInfo, TopicInfo, ServerInfo, ClientInfo};
-use std::ptr;
+use crate::core_types::monitoring::{
+    MonitoringSnapshot, ProcessInfo, TopicInfo, ServerInfo, ClientInfo,
+};
+use crate::error::RustecalError;
+use std::{ptr, slice};
 
 /// Provides access to eCAL runtime monitoring data.
 pub struct Monitoring;
@@ -12,61 +15,89 @@ pub struct Monitoring;
 impl Monitoring {
     /// Retrieves a snapshot of the current system state from the eCAL runtime.
     ///
-    /// This includes publishers, subscribers, servers, clients, and processes.
+    /// If no eCAL instances are running (nothing to monitor), returns an
+    /// empty `MonitoringSnapshot`. The C API signals “nothing to monitor”
+    /// by returning a non‑zero status.
     ///
-    /// # Returns
+    /// # Errors
     ///
-    /// A `MonitoringSnapshot` containing the current runtime information,
-    /// or an empty snapshot if retrieval fails.
-    pub fn get_snapshot() -> MonitoringSnapshot {
-        let mut raw_ptr: *mut rustecal_sys::eCAL_Monitoring_SMonitoring = ptr::null_mut();
+    /// - `RustecalError::NullPointer` if the C API returns a null pointer
+    ///   when a snapshot *should* have been provided.
+    pub fn get_snapshot() -> Result<MonitoringSnapshot, RustecalError> {
+        // 1) Prepare a null pointer for the C function to fill in
+        let mut raw: *mut rustecal_sys::eCAL_Monitoring_SMonitoring =
+            ptr::null_mut();
 
-        let success = unsafe { rustecal_sys::eCAL_Monitoring_GetMonitoring(&mut raw_ptr) };
+        // 2) Call the FFI: non‑zero means “no snapshot available”
+        let ret = unsafe {
+            rustecal_sys::eCAL_Monitoring_GetMonitoring(&mut raw, ptr::null())
+        };
 
-        if success != 0 || raw_ptr.is_null() {
-            return MonitoringSnapshot {
-                processes: vec![],
-                publishers: vec![],
-                subscribers: vec![],
-                servers: vec![],
-                clients: vec![],
-            };
+        // 3) If nothing to monitor, return an empty snapshot
+        if ret != 0 {
+            return Ok(MonitoringSnapshot {
+                processes: Vec::new(),
+                publishers: Vec::new(),
+                subscribers: Vec::new(),
+                servers: Vec::new(),
+                clients: Vec::new(),
+            });
         }
 
+        // 4) On success (ret == 0), ensure we got a valid pointer
+        if raw.is_null() {
+            return Err(RustecalError::NullPointer);
+        }
+
+        // 5) Build the snapshot and free the C‑allocated memory
         let snapshot = unsafe {
-            let raw = &*raw_ptr;
+            let processes = {
+                let cnt = (*raw).processes_length as usize;
+                let ptr = (*raw).processes;
+                slice::from_raw_parts(ptr, cnt)
+                    .iter()
+                    .map(|r| ProcessInfo::from(*r))
+                    .collect()
+            };
 
-            let processes = std::slice::from_raw_parts(raw.processes, raw.processes_length)
-                .iter()
-                .cloned()
-                .map(ProcessInfo::from)
-                .collect();
+            let publishers = {
+                let cnt = (*raw).publishers_length as usize;
+                let ptr = (*raw).publishers;
+                slice::from_raw_parts(ptr, cnt)
+                    .iter()
+                    .map(|r| TopicInfo::from(*r))
+                    .collect()
+            };
 
-            let publishers = std::slice::from_raw_parts(raw.publishers, raw.publishers_length)
-                .iter()
-                .cloned()
-                .map(TopicInfo::from)
-                .collect();
+            let subscribers = {
+                let cnt = (*raw).subscribers_length as usize;
+                let ptr = (*raw).subscribers;
+                slice::from_raw_parts(ptr, cnt)
+                    .iter()
+                    .map(|r| TopicInfo::from(*r))
+                    .collect()
+            };
 
-            let subscribers = std::slice::from_raw_parts(raw.subscribers, raw.subscribers_length)
-                .iter()
-                .cloned()
-                .map(TopicInfo::from)
-                .collect();
+            let servers = {
+                let cnt = (*raw).servers_length as usize;
+                let ptr = (*raw).servers;
+                slice::from_raw_parts(ptr, cnt)
+                    .iter()
+                    .map(|r| ServerInfo::from(*r))
+                    .collect()
+            };
 
-            let servers = std::slice::from_raw_parts(raw.servers, raw.servers_length)
-                .iter()
-                .cloned()
-                .map(ServerInfo::from)
-                .collect();
+            let clients = {
+                let cnt = (*raw).clients_length as usize;
+                let ptr = (*raw).clients;
+                slice::from_raw_parts(ptr, cnt)
+                    .iter()
+                    .map(|r| ClientInfo::from(*r))
+                    .collect()
+            };
 
-            let clients = std::slice::from_raw_parts(raw.clients, raw.clients_length)
-                .iter()
-                .cloned()
-                .map(ClientInfo::from)
-                .collect();
-
-            rustecal_sys::eCAL_Free(raw_ptr as *mut _);
+            // free the C‑allocated snapshot
+            rustecal_sys::eCAL_Free(raw as *mut _);
 
             MonitoringSnapshot {
                 processes,
@@ -77,6 +108,6 @@ impl Monitoring {
             }
         };
 
-        snapshot
+        Ok(snapshot)
     }
 }
