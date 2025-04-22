@@ -158,27 +158,36 @@
                         <h1 id="service-client-example"><a class="header" href="#service-client-example">Service Client Example</a></h1>
 <p>This example demonstrates how to call a <strong>Mirror Service</strong> using <code>rustecal</code>.</p>
 <h2 id="example-code"><a class="header" href="#example-code">Example Code</a></h2>
-<pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents};
-use rustecal_service::ServiceClient;
+<pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents, ServiceClient, ServiceRequest};
 
-fn main() {
-    Ecal::initialize(Some("mirror_client"), EcalComponents::DEFAULT).unwrap();
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    Ecal::initialize(Some("mirror_client"), EcalComponents::DEFAULT)?;
+    println!("mirror_client initialized. Sending requests…");
 
-    let client = ServiceClient::new("mirror_service").unwrap();
+    let client = ServiceClient::new("mirror_service")?;
 
     let request_data = b"Hello, Service!";
-    let timeout = std::time::Duration::from_millis(500);
+    let timeout = Some(500);
 
     while Ecal::ok() {
-        if let Some(response) = client.call(request_data, timeout) {
-            println!("Received response: {:?}", String::from_utf8_lossy(&amp;response));
+        let request = ServiceRequest {
+            payload: request_data.to_vec(),
+        };
+
+        // Call the "mirror" method
+        if let Some(response) = client.call("mirror", request, timeout) {
+            // Extract the echoed payload
+            let echoed = String::from_utf8_lossy(&amp;response.payload);
+            println!("Received response: {}", echoed);
         } else {
             println!("Service call timed out.");
         }
+
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
 
     Ecal::finalize();
+    Ok(())
 }</code></pre></pre>
 
                     </main>
@@ -189,7 +198,7 @@ fn main() {
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../api/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../examples/monitoring.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -203,7 +212,7 @@ fn main() {
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../api/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../examples/monitoring.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

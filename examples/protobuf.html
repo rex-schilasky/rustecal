@@ -164,10 +164,10 @@ use person::Person;
 
 impl IsProtobufType for Person {}
 
-fn main() {
-    Ecal::initialize(Some("protobuf publisher"), EcalComponents::DEFAULT).unwrap();
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    Ecal::initialize(Some("protobuf publisher"), EcalComponents::DEFAULT)?;
 
-    let pub_ = TypedPublisher::&lt;ProtobufMessage&lt;Person&gt;&gt;::new("person").unwrap();
+    let pub_ = TypedPublisher::&lt;ProtobufMessage&lt;Person&gt;&gt;::new("person")?;
 
     while Ecal::ok() {
         let person = Person { id: 1, name: "Alice".into(), ..Default::default() };
@@ -177,6 +177,7 @@ fn main() {
     }
 
     Ecal::finalize();
+    Ok(())
 }</code></pre></pre>
 <h2 id="subscriber"><a class="header" href="#subscriber">Subscriber</a></h2>
 <pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents, TypedSubscriber};
@@ -184,10 +185,10 @@ use rustecal_types_protobuf::ProtobufMessage;
 mod person { include!(concat!(env!("OUT_DIR"), "/pb.people.rs")); }
 use person::Person;
 
-fn main() {
-    Ecal::initialize(Some("protobuf subscriber"), EcalComponents::DEFAULT).unwrap();
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    Ecal::initialize(Some("protobuf subscriber"), EcalComponents::DEFAULT)?;
 
-    let mut sub = TypedSubscriber::&lt;ProtobufMessage&lt;Person&gt;&gt;::new("person").unwrap();
+    let mut sub = TypedSubscriber::&lt;ProtobufMessage&lt;Person&gt;&gt;::new("person")?;
     sub.set_callback(|msg| println!("Received person: {}", msg.msg.0.name));
 
     while Ecal::ok() {
@@ -195,6 +196,7 @@ fn main() {
     }
 
     Ecal::finalize();
+    Ok(())
 }</code></pre></pre>
 
                     </main>

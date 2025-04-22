@@ -193,40 +193,40 @@
 <li><code>/usr/lib</code> or <code>/usr/local/lib</code></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="project-structure"><a class="header" href="#project-structure">Project Structure</a></h1>
-<p>This workspace is organized into several purpose-specific crates to provide a modular, maintainable API for eCAL:</p>
+<p>This workspace is organized into several purpose‑specific crates to provide a modular, maintainable API for eCAL:</p>
 <div class="table-wrapper"><table><thead><tr><th>Crate</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>rustecal</code></td><td><strong>Meta‑crate</strong>: re‑exports core, pub/sub, and service APIs via feature flags (<code>pubsub</code>, <code>service</code>)</td></tr>
-<tr><td><code>rustecal-core</code></td><td>Core lifecycle management, logging, monitoring, and shared type definitions</td></tr>
+<tr><td><code>rustecal-core</code></td><td>Core lifecycle management, logging, monitoring, error handling, and shared type definitions</td></tr>
 <tr><td><code>rustecal-pubsub</code></td><td>Typed and untyped Publisher/Subscriber API</td></tr>
 <tr><td><code>rustecal-service</code></td><td>RPC Service server &amp; client API</td></tr>
 <tr><td><code>rustecal-sys</code></td><td>Low‑level FFI bindings to the eCAL C API</td></tr>
-<tr><td><code>rustecal-types-string</code></td><td>Helper: UTF-8 string message wrapper for typed pub/sub</td></tr>
+<tr><td><code>rustecal-types-string</code></td><td>Helper: UTF‑8 string message wrapper for typed pub/sub</td></tr>
 <tr><td><code>rustecal-types-bytes</code></td><td>Helper: raw byte vector message wrapper</td></tr>
 <tr><td><code>rustecal-types-protobuf</code></td><td>Helper: Protobuf message wrapper (using <code>prost</code>)</td></tr>
-<tr><td><code>rustecal-samples</code></td><td>Example binaries demonstrating pub/sub, RPC, logging, and monitoring</td></tr>
+<tr><td><code>rustecal-samples</code></td><td>Example binaries demonstrating pub/sub, RPC, monitoring, and logging</td></tr>
 </tbody></table>
 </div>
 <h2 id="workspace-layout"><a class="header" href="#workspace-layout">Workspace Layout</a></h2>
 <pre><code class="language-text">your_workspace/
-├── Cargo.toml                  # workspace manifest
-├── rustecal/                   # meta‑crate (feature‑gated)
-├── rustecal-core/              # core init + logging + monitoring + shared types
-│   ├── src/
-│   │   ├── core.rs
-│   │   ├── log.rs
-│   │   ├── monitoring.rs
-│   │   ├── log_level.rs
-│   │   ├── core_types/
-│   │   │   ├── mod.rs
-│   │   │   ├── logging.rs
-│   │   │   └── monitoring.rs
-├── rustecal-pubsub/            # pub/sub API
-├── rustecal-service/           # service RPC API
-├── rustecal-sys/               # raw C bindings
+├── Cargo.toml              # workspace manifest
+├── rustecal/               # meta‑crate
+├── rustecal-core/          # core init, logging, monitoring, error, shared types
+│   └── src/
+│       ├── core.rs
+│       ├── error.rs
+│       ├── log.rs
+│       ├── log_level.rs
+│       ├── monitoring.rs
+│       └── core_types/
+│           ├── logging.rs
+│           └── monitoring.rs
+├── rustecal-pubsub/        # pub/sub API
+├── rustecal-service/       # service RPC API
+├── rustecal-sys/           # raw C bindings
 ├── rustecal-types-string/
 ├── rustecal-types-bytes/
 ├── rustecal-types-protobuf/
-└── rustecal-samples/           # examples
+└── rustecal-samples/       # examples
     ├── pubsub/
     │   ├── hello_send/
     │   ├── hello_receive/
@@ -238,9 +238,8 @@
     │   ├── mirror_server/
     │   ├── mirror_client/
     │   └── mirror_client_instances/
-    └── core/
-        ├── logging_snapshot/         # example using `Log::get_logging`
-        └── monitoring_snapshot/      # example using `Monitoring::get_snapshot`
+    ├── monitoring_receive/
+    └── logging_receive/
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="supported-message-types"><a class="header" href="#supported-message-types">Supported Message Types</a></h1>
 <ul>
@@ -262,15 +261,23 @@
 <li><a href="examples/service_server.html">Mirror Server</a></li>
 <li><a href="examples/service_client.html">Mirror Client</a></li>
 </ul>
+<h2 id="monitoring"><a class="header" href="#monitoring">Monitoring</a></h2>
+<ul>
+<li><a href="examples/monitoring.html">Monitoring Snapshot</a></li>
+</ul>
+<h2 id="logging"><a class="header" href="#logging">Logging</a></h2>
+<ul>
+<li><a href="examples/logging.html">Logging Snapshot</a></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="binary-message-example"><a class="header" href="#binary-message-example">Binary Message Example</a></h1>
 <h2 id="publisher"><a class="header" href="#publisher">Publisher</a></h2>
 <pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents, TypedPublisher};
 use rustecal_types_bytes::BytesMessage;
 
-fn main() {
-    Ecal::initialize(Some("blob publisher"), EcalComponents::DEFAULT).unwrap();
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    Ecal::initialize(Some("blob publisher"), EcalComponents::DEFAULT)?;
 
-    let pub_ = TypedPublisher::&lt;BytesMessage&gt;::new("blob").unwrap();
+    let pub_ = TypedPublisher::&lt;BytesMessage&gt;::new("blob")?;
 
     let mut counter = 0u8;
     while Ecal::ok() {
@@ -282,15 +289,16 @@ fn main() {
     }
 
     Ecal::finalize();
+    Ok(())
 }</code></pre></pre>
 <h2 id="subscriber"><a class="header" href="#subscriber">Subscriber</a></h2>
 <pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents, TypedSubscriber};
 use rustecal_types_bytes::BytesMessage;
 
-fn main() {
-    Ecal::initialize(Some("blob subscriber"), EcalComponents::DEFAULT).unwrap();
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    Ecal::initialize(Some("blob subscriber"), EcalComponents::DEFAULT)?;
 
-    let mut sub = TypedSubscriber::&lt;BytesMessage&gt;::new("blob").unwrap();
+    let mut sub = TypedSubscriber::&lt;BytesMessage&gt;::new("blob")?;
     sub.set_callback(|msg| {
         println!("Received blob of {} bytes", msg.msg.0.len());
     });
@@ -300,16 +308,17 @@ fn main() {
     }
 
     Ecal::finalize();
+    Ok(())
 }</code></pre></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="string-message-example"><a class="header" href="#string-message-example">String Message Example</a></h1>
 <h2 id="publisher-1"><a class="header" href="#publisher-1">Publisher</a></h2>
 <pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents, TypedPublisher};
 use rustecal_types_string::StringMessage;
 
-fn main() {
-    Ecal::initialize(Some("string publisher"), EcalComponents::DEFAULT).unwrap();
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    Ecal::initialize(Some("string publisher"), EcalComponents::DEFAULT)?;
 
-    let publisher = TypedPublisher::&lt;StringMessage&gt;::new("hello").unwrap();
+    let publisher = TypedPublisher::&lt;StringMessage&gt;::new("hello")?;
 
     while Ecal::ok() {
         let msg = StringMessage(format!("Hello from Rust"));
@@ -335,6 +344,7 @@ fn main() {
     }
 
     Ecal::finalize();
+    Ok(())
 }</code></pre></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="protobuf-message-example"><a class="header" href="#protobuf-message-example">Protobuf Message Example</a></h1>
 <h2 id="publisher-2"><a class="header" href="#publisher-2">Publisher</a></h2>
@@ -345,10 +355,10 @@ use person::Person;
 
 impl IsProtobufType for Person {}
 
-fn main() {
-    Ecal::initialize(Some("protobuf publisher"), EcalComponents::DEFAULT).unwrap();
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    Ecal::initialize(Some("protobuf publisher"), EcalComponents::DEFAULT)?;
 
-    let pub_ = TypedPublisher::&lt;ProtobufMessage&lt;Person&gt;&gt;::new("person").unwrap();
+    let pub_ = TypedPublisher::&lt;ProtobufMessage&lt;Person&gt;&gt;::new("person")?;
 
     while Ecal::ok() {
         let person = Person { id: 1, name: "Alice".into(), ..Default::default() };
@@ -358,6 +368,7 @@ fn main() {
     }
 
     Ecal::finalize();
+    Ok(())
 }</code></pre></pre>
 <h2 id="subscriber-2"><a class="header" href="#subscriber-2">Subscriber</a></h2>
 <pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents, TypedSubscriber};
@@ -365,10 +376,10 @@ use rustecal_types_protobuf::ProtobufMessage;
 mod person { include!(concat!(env!("OUT_DIR"), "/pb.people.rs")); }
 use person::Person;
 
-fn main() {
-    Ecal::initialize(Some("protobuf subscriber"), EcalComponents::DEFAULT).unwrap();
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    Ecal::initialize(Some("protobuf subscriber"), EcalComponents::DEFAULT)?;
 
-    let mut sub = TypedSubscriber::&lt;ProtobufMessage&lt;Person&gt;&gt;::new("person").unwrap();
+    let mut sub = TypedSubscriber::&lt;ProtobufMessage&lt;Person&gt;&gt;::new("person")?;
     sub.set_callback(|msg| println!("Received person: {}", msg.msg.0.name));
 
     while Ecal::ok() {
@@ -376,56 +387,119 @@ fn main() {
     }
 
     Ecal::finalize();
+    Ok(())
 }</code></pre></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="service-server-example"><a class="header" href="#service-server-example">Service Server Example</a></h1>
 <p>This example shows how to implement a basic <strong>Mirror Service Server</strong> using <code>rustecal</code>.</p>
 <p>The server receives a request, logs it, and sends it back as a response.</p>
 <h2 id="example-code"><a class="header" href="#example-code">Example Code</a></h2>
-<pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents};
-use rustecal_service::{ServiceServer, ReceivedRequest};
+<pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents, ServiceServer};
+use rustecal::service::types::MethodInfo;
 
-fn main() {
-    Ecal::initialize(Some("mirror_server"), EcalComponents::DEFAULT).unwrap();
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    Ecal::initialize(Some("mirror_server"), EcalComponents::DEFAULT)?;
 
-    let _server = ServiceServer::new("mirror_service", move |req: ReceivedRequest| {
-        let request_str = String::from_utf8_lossy(req.request());
-        println!("Received request: {}", request_str);
+    let mut server = ServiceServer::new("mirror_service")?;
 
-        // Respond with the same data
-        req.respond(req.request());
-    }).expect("Failed to create service server");
+    server.add_method("mirror", Box::new(|method: MethodInfo, req: &amp;[u8]| {
+        let request_str = String::from_utf8_lossy(req);
+        println!("Received [{}] request: {}", method.method_name, request_str);
 
-    // Keep the server running
+        // Echo (mirror) the same bytes back
+        req.to_vec()
+    }))?;
+
+    println!("mirror_service is running…");
+
     while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
 
     Ecal::finalize();
+    Ok(())
 }</code></pre></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="service-client-example"><a class="header" href="#service-client-example">Service Client Example</a></h1>
 <p>This example demonstrates how to call a <strong>Mirror Service</strong> using <code>rustecal</code>.</p>
 <h2 id="example-code-1"><a class="header" href="#example-code-1">Example Code</a></h2>
-<pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents};
-use rustecal_service::ServiceClient;
+<pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents, ServiceClient, ServiceRequest};
 
-fn main() {
-    Ecal::initialize(Some("mirror_client"), EcalComponents::DEFAULT).unwrap();
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    Ecal::initialize(Some("mirror_client"), EcalComponents::DEFAULT)?;
+    println!("mirror_client initialized. Sending requests…");
 
-    let client = ServiceClient::new("mirror_service").unwrap();
+    let client = ServiceClient::new("mirror_service")?;
 
     let request_data = b"Hello, Service!";
-    let timeout = std::time::Duration::from_millis(500);
+    let timeout = Some(500);
 
     while Ecal::ok() {
-        if let Some(response) = client.call(request_data, timeout) {
-            println!("Received response: {:?}", String::from_utf8_lossy(&amp;response));
+        let request = ServiceRequest {
+            payload: request_data.to_vec(),
+        };
+
+        // Call the "mirror" method
+        if let Some(response) = client.call("mirror", request, timeout) {
+            // Extract the echoed payload
+            let echoed = String::from_utf8_lossy(&amp;response.payload);
+            println!("Received response: {}", echoed);
         } else {
             println!("Service call timed out.");
         }
+
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
 
     Ecal::finalize();
+    Ok(())
+}</code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="monitoring-snapshot"><a class="header" href="#monitoring-snapshot">Monitoring Snapshot</a></h1>
+<p>This example demonstrates how to continuously poll the eCAL runtime for a <strong>monitoring snapshot</strong> using the <code>Monitoring::get_snapshot()</code> API.</p>
+<pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents};
+use rustecal_core::monitoring::Monitoring;
+use std::{thread, time::Duration};
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    // Initialize only the monitoring subsystem
+    Ecal::initialize(Some("monitoring_receive_sample"), EcalComponents::MONITORING)?;
+    println!("eCAL initialized. Entering monitoring loop…");
+
+    while Ecal::ok() {
+        let snap = Monitoring::get_snapshot()?;
+
+        println!("=== Monitoring Snapshot ===\n");
+        println!("Processes:\n{:#?}", snap.processes);
+        println!("\nPublishers:\n{:#?}", snap.publishers);
+        println!("\nSubscribers:\n{:#?}", snap.subscribers);
+        println!("\nServers:\n{:#?}", snap.servers);
+        println!("\nClients:\n{:#?}", snap.clients);
+
+        thread::sleep(Duration::from_secs(1));
+    }
+
+    Ecal::finalize();
+    Ok(())
+}</code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="logging-snapshot"><a class="header" href="#logging-snapshot">Logging Snapshot</a></h1>
+<p>This example demonstrates how to continuously poll the eCAL runtime for <strong>log messages</strong> using the <code>Log::get_logging()</code> API.</p>
+<pre><pre class="playground"><code class="language-rust">use rustecal::{Ecal, EcalComponents};
+use rustecal_core::log::Log;
+use std::{thread, time::Duration};
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    // Initialize only the logging subsystem
+    Ecal::initialize(Some("logging_receive_sample"), EcalComponents::LOGGING)?;
+    println!("eCAL initialized. Entering logging loop…");
+
+    while Ecal::ok() {
+        let entries = Log::get_logging()?;
+        println!("=== Logging Snapshot ===\n");
+        println!("Entries:\n{:#?}", entries);
+
+        thread::sleep(Duration::from_secs(1));
+    }
+
+    Ecal::finalize();
+    Ok(())
 }</code></pre></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="api-documentation"><a class="header" href="#api-documentation">API Documentation</a></h1>
 <p>Welcome to the <code>rustecal</code> API documentation. This section provides an overview of the main types and traits used to interact with the eCAL communication system through safe and idiomatic Rust APIs.</p>
