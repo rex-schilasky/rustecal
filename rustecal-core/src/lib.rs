@@ -11,6 +11,7 @@
 
 pub mod core;
 pub mod components;
+pub mod error;
 pub mod types;
 pub mod log;
 pub mod log_level;
@@ -19,6 +20,7 @@ pub mod core_types;
 // Re‑exports for ergonomic access:
 pub use core::Ecal;
 pub use components::EcalComponents;
+pub use error::RustecalError;
 pub use log::Log;
 pub use log_level::LogLevel;
 pub use core_types::logging::LogMessage;

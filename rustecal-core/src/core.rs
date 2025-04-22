@@ -14,117 +14,97 @@
 //! application and [`Ecal::finalize`] at shutdown.
 
 use std::ffi::{CStr, CString};
+use std::ptr;
+
 use crate::components::EcalComponents;
+use crate::error::{check, RustecalError};
 use crate::types::Version;
 
-/// Provides access to the core initialization, shutdown, and state-checking functions of eCAL.
+/// Provides access to the core initialization, shutdown, and state‑checking functions of eCAL.
 pub struct Ecal;
 
 impl Ecal {
     /// Initializes the eCAL runtime system.
     ///
-    /// This function must be called before using any publisher, subscriber, or service functionality.
-    ///
     /// # Arguments
     ///
-    /// * `unit_name` - Optional name to identify this process in eCAL (e.g. in monitoring).
-    /// * `components` - Bitmask of which subsystems (e.g. pub/sub, monitoring) to enable.
+    /// * `unit_name` – Optional name to identify this process in eCAL.
+    /// * `components` – Bitmask of which subsystems to enable.
     ///
-    /// # Returns
+    /// # Errors
     ///
-    /// Returns `Ok(())` on success, or `Err(code)` with a non-zero error code.
-    pub fn initialize(unit_name: Option<&str>, components: EcalComponents) -> Result<(), i32> {
-        let cstr = unit_name.map(|s| CString::new(s).unwrap());
-        let ptr = cstr.as_ref().map_or(std::ptr::null(), |c| c.as_ptr());
-
-        let result = unsafe {
-            rustecal_sys::eCAL_Initialize(ptr, &components.bits(), std::ptr::null())
+    /// Returns `Err(RustecalError::Ecal{..})` on any non‑zero C return code,
+    /// or `RustecalError::Internal` if the unit name contains an interior NUL.
+    pub fn initialize(
+        unit_name: Option<&str>,
+        components: EcalComponents,
+    ) -> Result<(), RustecalError> {
+        // Convert the unit name (if any), mapping CString errors
+        let (name_ptr, _): ( *const i8, Option<CString> ) = if let Some(name) = unit_name {
+            let c = CString::new(name)
+                .map_err(|e| RustecalError::Internal(format!("invalid unit name: {}", e)))?;
+            (c.as_ptr(), Some(c))
+        } else {
+            (ptr::null(), None)
         };
 
-        if result == 0 {
-            Ok(())
-        } else {
-            Err(result)
-        }
+        // Call the C API and map its return code
+        let ret = unsafe { rustecal_sys::eCAL_Initialize(name_ptr, &components.bits(), ptr::null()) };
+        check(ret)
     }
 
     /// Finalizes and shuts down the eCAL runtime system.
     ///
-    /// After calling this function, all publishers, subscribers, and services are invalidated.
+    /// After calling this, all publishers, subscribers, and services are invalidated.
     pub fn finalize() {
         unsafe {
             rustecal_sys::eCAL_Finalize();
         }
     }
 
-    /// Checks if the eCAL system is initialized and running properly.
-    ///
-    /// This can be used as the main loop condition in long-running processes.
-    ///
-    /// # Returns
-    ///
-    /// `true` if the system is operational, `false` otherwise.
+    /// Returns `true` if the eCAL system is currently operational.
     pub fn ok() -> bool {
         unsafe { rustecal_sys::eCAL_Ok() != 0 }
     }
 
-    /// Checks if the eCAL system has been initialized.
-    ///
-    /// This function checks whether any components of the middleware have been initialized.
-    ///
-    /// # Returns
-    ///
-    /// `true` if initialization has occurred, `false` otherwise.
+    /// Returns `true` if *any* eCAL components have been initialized.
     pub fn is_initialized() -> bool {
         unsafe { rustecal_sys::eCAL_IsInitialized() != 0 }
     }
 
-    /// Checks if specific components of eCAL are initialized.
-    ///
-    /// This allows querying the status of individual middleware components like pub/sub, monitoring, etc.
-    ///
-    /// # Arguments
-    ///
-    /// * `components` - Bitmask of components to check.
-    ///
-    /// # Returns
-    ///
-    /// `true` if the given components are initialized, `false` otherwise.
+    /// Returns `true` if the specified components are initialized.
     pub fn is_component_initialized(components: EcalComponents) -> bool {
         unsafe { rustecal_sys::eCAL_IsComponentInitialized(components.bits()) != 0 }
     }
 
-    /// Returns the version string of the eCAL runtime.
+    /// Returns the eCAL version string (e.g. `"6.0.0"`).
     ///
-    /// # Returns
-    ///
-    /// A static string slice with the full version string, e.g. `"5.11.0"`.
+    /// This is infallible: if the C pointer is null or contains invalid UTF‑8,
+    /// it returns `"unknown"`.
     pub fn version_string() -> &'static str {
-        unsafe {
-            CStr::from_ptr(rustecal_sys::eCAL_GetVersionString())
-                .to_str()
-                .unwrap_or("unknown")
+        // SAFETY: eCAL guarantees a static, valid C string here.
+        let ptr = unsafe { rustecal_sys::eCAL_GetVersionString() };
+        if ptr.is_null() {
+            "unknown"
+        } else {
+            unsafe { CStr::from_ptr(ptr).to_str().unwrap_or("unknown") }
         }
     }
 
-    /// Returns the build date string of the eCAL runtime.
+    /// Returns the eCAL build‑date string (e.g. `"01.05.2025"`).
     ///
-    /// # Returns
-    ///
-    /// A static string slice with the build date string, e.g. `"Apr 2025"`.
+    /// This is infallible: if the C pointer is null or contains invalid UTF‑8,
+    /// it returns `"unknown"`.
     pub fn version_date_string() -> &'static str {
-        unsafe {
-            CStr::from_ptr(rustecal_sys::eCAL_GetVersionDateString())
-                .to_str()
-                .unwrap_or("unknown")
+        let ptr = unsafe { rustecal_sys::eCAL_GetVersionDateString() };
+        if ptr.is_null() {
+            "unknown"
+        } else {
+            unsafe { CStr::from_ptr(ptr).to_str().unwrap_or("unknown") }
         }
     }
 
-    /// Returns the version of the eCAL runtime as structured integers.
-    ///
-    /// # Returns
-    ///
-    /// A [`Version`] struct with fields `major`, `minor`, and `patch`.
+    /// Returns the eCAL version as a structured `Version { major, minor, patch }`.
     pub fn version_struct() -> Version {
         unsafe { rustecal_sys::eCAL_GetVersion().into() }
     }
