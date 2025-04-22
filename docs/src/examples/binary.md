@@ -6,10 +6,10 @@
 use rustecal::{Ecal, EcalComponents, TypedPublisher};
 use rustecal_types_bytes::BytesMessage;
 
-fn main() {
-    Ecal::initialize(Some("blob publisher"), EcalComponents::DEFAULT).unwrap();
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    Ecal::initialize(Some("blob publisher"), EcalComponents::DEFAULT)?;
 
-    let pub_ = TypedPublisher::<BytesMessage>::new("blob").unwrap();
+    let pub_ = TypedPublisher::<BytesMessage>::new("blob")?;
 
     let mut counter = 0u8;
     while Ecal::ok() {
@@ -21,6 +21,7 @@ fn main() {
     }
 
     Ecal::finalize();
+    Ok(())
 }
 ```
 
@@ -30,10 +31,10 @@ fn main() {
 use rustecal::{Ecal, EcalComponents, TypedSubscriber};
 use rustecal_types_bytes::BytesMessage;
 
-fn main() {
-    Ecal::initialize(Some("blob subscriber"), EcalComponents::DEFAULT).unwrap();
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    Ecal::initialize(Some("blob subscriber"), EcalComponents::DEFAULT)?;
 
-    let mut sub = TypedSubscriber::<BytesMessage>::new("blob").unwrap();
+    let mut sub = TypedSubscriber::<BytesMessage>::new("blob")?;
     sub.set_callback(|msg| {
         println!("Received blob of {} bytes", msg.msg.0.len());
     });
@@ -43,5 +44,6 @@ fn main() {
     }
 
     Ecal::finalize();
+    Ok(())
 }
 ```

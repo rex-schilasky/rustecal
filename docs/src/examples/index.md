@@ -12,3 +12,11 @@ Code samples for using rustecal.
 
 - [Mirror Server](service_server.md)
 - [Mirror Client](service_client.md)
+
+## Monitoring
+
+- [Monitoring Snapshot](monitoring.md)
+
+## Logging
+
+- [Logging Snapshot](logging.md)

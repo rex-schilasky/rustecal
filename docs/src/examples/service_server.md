@@ -7,25 +7,29 @@ The server receives a request, logs it, and sends it back as a response.
 ## Example Code
 
 ```rust
-use rustecal::{Ecal, EcalComponents};
-use rustecal_service::{ServiceServer, ReceivedRequest};
+use rustecal::{Ecal, EcalComponents, ServiceServer};
+use rustecal::service::types::MethodInfo;
 
-fn main() {
-    Ecal::initialize(Some("mirror_server"), EcalComponents::DEFAULT).unwrap();
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    Ecal::initialize(Some("mirror_server"), EcalComponents::DEFAULT)?;
 
-    let _server = ServiceServer::new("mirror_service", move |req: ReceivedRequest| {
-        let request_str = String::from_utf8_lossy(req.request());
-        println!("Received request: {}", request_str);
+    let mut server = ServiceServer::new("mirror_service")?;
 
-        // Respond with the same data
-        req.respond(req.request());
-    }).expect("Failed to create service server");
+    server.add_method("mirror", Box::new(|method: MethodInfo, req: &[u8]| {
+        let request_str = String::from_utf8_lossy(req);
+        println!("Received [{}] request: {}", method.method_name, request_str);
 
-    // Keep the server running
+        // Echo (mirror) the same bytes back
+        req.to_vec()
+    }))?;
+
+    println!("mirror_service is running…");
+
     while Ecal::ok() {
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
 
     Ecal::finalize();
+    Ok(())
 }
 ```

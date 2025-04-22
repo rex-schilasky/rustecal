@@ -11,6 +11,8 @@
   - [Protobuf](examples/protobuf.md)
   - [Server](examples/service_server.md)
   - [Client](examples/service_client.md)
+  - [Monitoring](examples/monitoring.md)
+  - [Logging](examples/logging.md)
 - [API Documentation](api/index.md)
   - [Ecal Lifecycle](api/ecal.md)
   - [Typed Publisher](api/publisher.md)

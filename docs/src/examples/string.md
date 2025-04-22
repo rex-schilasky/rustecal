@@ -6,10 +6,10 @@
 use rustecal::{Ecal, EcalComponents, TypedPublisher};
 use rustecal_types_string::StringMessage;
 
-fn main() {
-    Ecal::initialize(Some("string publisher"), EcalComponents::DEFAULT).unwrap();
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    Ecal::initialize(Some("string publisher"), EcalComponents::DEFAULT)?;
 
-    let publisher = TypedPublisher::<StringMessage>::new("hello").unwrap();
+    let publisher = TypedPublisher::<StringMessage>::new("hello")?;
 
     while Ecal::ok() {
         let msg = StringMessage(format!("Hello from Rust"));
@@ -39,5 +39,6 @@ fn main() {
     }
 
     Ecal::finalize();
+    Ok(())
 }
 ```
