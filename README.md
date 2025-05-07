@@ -6,7 +6,7 @@ Rust bindings for the high-performance [eCAL](https://github.com/eclipse-ecal/ec
 
 ## Features
 
-- Idiomatic Rust interface to the eCAL C API
+- Idiomatic Rust interface to the eCAL API
 - Zero-copy shared memory transport
 - Type-safe publish/subscribe and service communication
 - Modular type support: String, Binary, Protobuf
