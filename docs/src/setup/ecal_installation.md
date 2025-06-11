@@ -1,6 +1,6 @@
 # eCAL Library Installation
 
-`rustecal` is built on the eCAL v6 API and is not compatible with earlier eCAL v5 releases. General instruction for the installation you can find [here](https://eclipse-ecal.github.io/ecal/stable/getting_started/setup.html).
+`rustecal` is built on the eCAL v6 API and is not compatible with earlier eCAL v5 releases. General instructions for installation can be found [here](https://eclipse-ecal.github.io/ecal/stable/getting_started/setup.html).
 
 ## Windows
 
